@@ -1129,12 +1129,12 @@ function updatePlayer(dt){
   const wP=clamp(player.ctrl.p*1.35*auth,-1.5,1.5);
   const wR=clamp(player.ctrl.r*2.5*auth,-1.5,1.5);
   const wY=clamp(player.ctrl.y*0.78*auth,-1.5,1.5);
-  // ===== ПЕРЕГРУЗКА: G = 1 + V·ω(тангаж) / 15.0 =====
-  const gT=1+player.speed*wP/15.0; // G растёт медленнее — комфортный пилотаж
+  // ===== ПЕРЕГРУЗКА: G = 1 + |V·ω(тангаж)| / 22.0 =====
+  const gT=1+Math.abs(player.speed*wP)/22.0; // модуль — без отрицательной перегрузки; делитель 22 — рост G очень плавный
   player.g+=(gT-player.g)*(1-Math.exp(-dt*3.5)); // медленнее набирается — краткий рывок не «в темноту»
   if(player.glocT>0){ player.glocT-=dt; if(player.glocT<=0) player.glocT=-0.001; } // фаза блэкаута
   else if(player.glocT<0){ player.glocT-=dt; if(player.glocT<-1.2) player.glocT=0; } // плавный выход
-  else if(player.g>10.5){ // G-LOC: только затяжной набор перегрузки
+  else if(player.g>11.5){ // G-LOC: только реально жёсткая затяжная перегрузка
     player.gPk=player.g; // фиксируем пиковую перегрузку — её и показываем до конца выхода
     player.glocT=2+rand(0,1);
     toast('ПОТЕРЯ СОЗНАНИЯ! Перегрузка '+player.g.toFixed(1)+'G');
@@ -1474,13 +1474,12 @@ function updateHUD(dt){
     elRkA[i].textContent=ALLIES[i].kills;
     elRrA[i].classList.toggle('dead', !ALLIES[i].alive);
   }
-  // ---- полоски HP команд (синие = игрок + ведомые) ----
-  let redHp=0; for(const b of bots) if(b.alive&&b.team==='red') redHp+=Math.max(0,b.hp);
+  // ---- полоски команд (синие = HP игрока + ведомых; красные = прогресс уничтожения, только от фрагов) ----
   let blueHp=Math.max(0,player.hp); for(const al of ALLIES) if(al.alive) blueHp+=Math.max(0,al.hp);
   elTbB.style.width=(blueHp/205*100)+'%';
   elTbBn.textContent=Math.round(blueHp);
-  elTbR.style.width=(redHp/150*100)+'%';
-  elTbRn.textContent=Math.round(redHp);
+  elTbR.style.width = Math.max(0, 100 - (kills / 25) * 100) + '%'; // убывает только от убийств — респавн ботов не лечит полоску
+  elTbRn.textContent=Math.max(0,25-kills); // сколько фрагов осталось до победы
   // ---- перегрузка: индикатор G, вуаль, G-LOC, redout ----
   elG.textContent=player.g.toFixed(1);
   elG.classList.toggle('hot', player.g>9||player.g<0.35);
@@ -1594,6 +1593,7 @@ const clock=new THREE.Clock();
 function animate(){
   requestAnimationFrame(animate);
   const dt=Math.min(clock.getDelta(),0.05);
+  if(state==='win') return; // победа — игра остановлена, последний кадр остаётся под оверлеем
   if(state!=='pause'){
     time+=dt;
     if(state==='menu') updateMenuPilot(dt);
@@ -1602,7 +1602,7 @@ function animate(){
       deathT+=dt;
       if(deathT>1.4&&!deadShown){ deadShown=true; showDeath(); }
     }
-    if(kills>=25 && state==='play'){ showVictory(); }
+    if(kills>=25 && state==='play'){ showVictory(); return; } // победа — выходим из кадра до обновлений
     updateBots(dt);
     updateBullets(dt);
     updateMissiles(dt);
