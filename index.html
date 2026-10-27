@@ -23,7 +23,7 @@
   #thr-fill{background:linear-gradient(90deg,#c96a2a,#ffcf8f)}
   #hp-fill{background:#7ec850}
   .hud-small{font-size:11px;color:var(--amber-dim);margin-top:3px;font-family:monospace}
-  #missiles{display:flex;gap:4px;justify-content:flex-end;margin-top:6px}
+  #missiles{display:none;gap:4px;justify-content:flex-end;margin-top:6px} /* ракеты убраны из игры */
   #missiles i{width:9px;height:16px;border:1px solid var(--amber-dim);border-radius:2px}
   #missiles i.on{background:#ffcf8f;box-shadow:0 0 6px rgba(255,180,90,.6)}
   #v-kills{color:#ffd27a}
@@ -106,6 +106,8 @@
   .ck span{font-family:monospace;font-weight:700;color:#ffb060;font-size:13px}
   button{margin-top:22px;pointer-events:auto;cursor:pointer;background:transparent;color:#ffd9a0;border:1.5px solid #d98a4a;border-radius:6px;padding:12px 38px;font-size:16px;font-weight:800;letter-spacing:3px;transition:.2s;font-family:inherit}
   button:hover{background:#d98a4a;color:#241208;box-shadow:0 0 26px rgba(255,140,60,.5)}
+  button.secondary{border-color:#7a6a55;color:#c9b490;padding:12px 22px;letter-spacing:2px}
+  button.secondary:hover{background:#7a6a55;color:#1c1108;box-shadow:0 0 18px rgba(120,100,80,.4)}
   .hint{margin-top:12px;font-size:11px;color:var(--amber-dim)}
   .stats{margin-top:16px;font-size:19px;color:#ffcf8f;font-family:monospace}
   #ov-death .title{color:#ff7a5e;text-shadow:0 2px 14px rgba(255,50,30,.55)}
@@ -158,7 +160,7 @@
   </div>
   <div id="hud-right">
     <div><div class="hud-label">ПРОЧНОСТЬ</div><div class="bar"><div id="hp-fill"></div></div><div class="hud-small" id="v-hp">100 / 100</div></div>
-    <div><div class="hud-label">РАКЕТЫ</div><div id="missiles"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div></div>
+    <div style="display:none"><div class="hud-label">РАКЕТЫ</div><div id="missiles"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div></div>
     <div><div class="hud-label">СБИТО</div><div class="hud-value" id="v-kills">0</div></div>
     <div id="tgt-list">
       <div class="hud-label">ЦЕЛИ</div>
@@ -196,7 +198,6 @@
   </div>
   <div id="keypanel">
     <div class="kp-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#ffcf8f" stroke-width="1.3"><circle cx="7" cy="7" r="4.6"/><path d="M7 0.5v3M7 10.5v3M0.5 7h3M10.5 7h3"/><circle cx="7" cy="7" r="1" fill="#ff7a4a" stroke="none"/></svg><span class="kbd">ЛКМ</span>огонь</div>
-    <div class="kp-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#ffcf8f" stroke-width="1.3"><path d="M7 1.2 L9 4.4 V9.2 L7 12.8 L5 9.2 V4.4 Z"/><path d="M5 7 H2.4 M9 7 h2.6"/></svg><span class="kbd">Space</span>ракета</div>
     <div class="kp-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#ffcf8f" stroke-width="1.3"><rect x="1.5" y="3.5" width="11" height="8" rx="1.5"/><path d="M5 3.5 L6 1.8 h2 L9 3.5"/><circle cx="7" cy="7.5" r="2.2"/></svg><span class="kbd">B</span>камера</div>
     <div class="kp-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#ffcf8f" stroke-width="1.3"><circle cx="6" cy="6" r="3.8"/><path d="M9 9 L12.5 12.5"/></svg><span class="kbd">Z / ПКМ</span>зум</div>
   </div>
@@ -213,7 +214,6 @@
       <div class="ck"><span>Q / E</span>рыскание — нос влево / вправо</div>
       <div class="ck"><span>Shift / Ctrl</span>тяга больше / меньше (X = как Ctrl)</div>
       <div class="ck"><span>ЛКМ</span>пушки — трассеры</div>
-      <div class="ck"><span>Space</span>самонаводящаяся ракета</div>
       <div class="ck"><span>B</span>вид из кабины / сзади</div>
       <div class="ck"><span>Z или ПКМ</span>зум камеры</div>
       <div class="ck"><span>M</span>звук вкл/выкл</div>
@@ -230,7 +230,7 @@
     <div class="subtitle">небо сегодня не ваше</div>
     <div class="stats">Сбито врагов: <span id="death-kills">0</span></div>
     <div class="hint" id="death-by" style="font-size:12px"></div>
-    <button id="btn-again">ЛЕТИТЬ СНОВА ▸</button>
+    <button id="btn-again">ЛЕТИТЬ СНОВА ▸</button><button id="btn-menu-death" class="secondary" style="margin-left:10px">В МЕНЮ</button>
     <div class="hint">или нажмите R / Enter</div>
   </div>
 </div>
@@ -239,6 +239,7 @@
   <div class="panel">
     <div class="title" style="font-size:26px">ПАУЗА</div>
     <div class="hint" style="font-size:13px;margin-top:14px">Esc или клик — продолжить бой</div>
+    <button id="btn-menu-pause" class="secondary" style="margin-left:10px">В МЕНЮ</button>
   </div>
 </div>
 
@@ -247,7 +248,7 @@
     <div class="title" style="color:#7ec850">ПОБЕДА</div>
     <div class="subtitle">Небо очищено от врагов</div>
     <div class="stats">Сбито врагов: <span id="victory-kills">0</span></div>
-    <button id="btn-victory">В МЕНЮ</button>
+    <button id="btn-victory">ЛЕТИТЬ СНОВА ▸</button><button id="btn-menu-victory" class="secondary" style="margin-left:10px">В МЕНЮ</button>
   </div>
 </div>
 
@@ -406,10 +407,10 @@ function terrainHeight(x,z){
 // вода
 const water = new THREE.Mesh(
   new THREE.PlaneGeometry(100000,100000),
-  new THREE.MeshPhongMaterial({color:0x1c5a80, transparent:true, opacity:0.9, shininess:130, specular:0x99bbff})
+  new THREE.MeshPhongMaterial({color:0x1c5a80, transparent:true, opacity:0.9, shininess:130, specular:0x99bbff, polygonOffset:true, polygonOffsetFactor:1, polygonOffsetUnits:1})
 );
 water.rotation.x = -Math.PI/2;
-water.position.y = -2;
+water.position.y = -5; // опущена против Z-fighting (мерцания) с дном
 scene.add(water);
 
 // ================= МОДЕЛЬ САМОЛЁТА (биплан) =================
@@ -575,8 +576,7 @@ window.addEventListener('keydown', e=>{
   AudioSys.init();
   keys[e.code]=true;
   if(e.repeat) return;
-  if(e.code==='Space' && state==='play' && player.alive) fireMissile();
-  else if(e.code==='KeyB'){ camFP=!camFP; toast(camFP?'Вид из кабины':'Вид сзади'); }
+  if(e.code==='KeyB'){ camFP=!camFP; toast(camFP?'Вид из кабины':'Вид сзади'); }
   else if(e.code==='KeyM') AudioSys.toggleMute();
   else if(e.code==='KeyR' && (state==='play'||state==='dead')) restart();
   else if(e.code==='Escape'||e.code==='KeyP') togglePause();
@@ -979,8 +979,8 @@ function botFire(b){
   const d=b.pos.distanceTo(T.pos);
   _v2.copy(T.pos).addScaledVector(T.vel, d/430*0.85);
   _v2.sub(_v1).normalize();
-  // большой разброс 10–15° — боты не снайперы
-  const dev=rand(10,15)*Math.PI/180, az=rand(0,Math.PI*2);
+  // небольшой разброс 3–5° — боты бьют заметно точнее
+  const dev=rand(3,5)*Math.PI/180, az=rand(0,Math.PI*2);
   _v3.copy(Math.abs(_v2.y)>0.9?AX:AY).cross(_v2).normalize();
   _v4.copy(_v2).cross(_v3);
   _v2.multiplyScalar(Math.cos(dev))
@@ -1129,12 +1129,12 @@ function updatePlayer(dt){
   const wP=clamp(player.ctrl.p*1.35*auth,-1.5,1.5);
   const wR=clamp(player.ctrl.r*2.5*auth,-1.5,1.5);
   const wY=clamp(player.ctrl.y*0.78*auth,-1.5,1.5);
-  // ===== ПЕРЕГРУЗКА: G = 1 + |V·ω(тангаж)| / 22.0 =====
-  const gT=1+Math.abs(player.speed*wP)/22.0; // модуль — без отрицательной перегрузки; делитель 22 — рост G очень плавный
+  // ===== ПЕРЕГРУЗКА: G = 1 + |V·ω(тангаж)| / 14.0 =====
+  const gT=1+Math.abs(player.speed*wP)/14.0; // модуль — без отрицательной перегрузки; /14 — LOC достижим на жёстком вираже
   player.g+=(gT-player.g)*(1-Math.exp(-dt*3.5)); // медленнее набирается — краткий рывок не «в темноту»
   if(player.glocT>0){ player.glocT-=dt; if(player.glocT<=0) player.glocT=-0.001; } // фаза блэкаута
   else if(player.glocT<0){ player.glocT-=dt; if(player.glocT<-1.2) player.glocT=0; } // плавный выход
-  else if(player.g>11.5){ // G-LOC: только реально жёсткая затяжная перегрузка
+  else if(player.g>10.0){ // G-LOC: только реально жёсткая затяжная перегрузка
     player.gPk=player.g; // фиксируем пиковую перегрузку — её и показываем до конца выхода
     player.glocT=2+rand(0,1);
     toast('ПОТЕРЯ СОЗНАНИЯ! Перегрузка '+player.g.toFixed(1)+'G');
@@ -1192,9 +1192,7 @@ function updatePlayer(dt){
   // столкновение с землёй
   const gh=Math.max(terrainHeight(player.pos.x,player.pos.z),-2);
   if(player.pos.y<gh+2){ killPlayer(); return; }
-  // регенерация после 6с без урона
-  player.lastHit+=dt;
-  if(player.lastHit>6 && player.hp<100) player.hp=Math.min(100,player.hp+3*dt);
+  player.lastHit+=dt; // учёт времени с последнего урона (регенерация убрана)
   // перезарядка ракет
   player.cdM=Math.max(0,player.cdM-dt);
   if(player.ammo<4){
@@ -1478,8 +1476,8 @@ function updateHUD(dt){
   let blueHp=Math.max(0,player.hp); for(const al of ALLIES) if(al.alive) blueHp+=Math.max(0,al.hp);
   elTbB.style.width=(blueHp/205*100)+'%';
   elTbBn.textContent=Math.round(blueHp);
-  elTbR.style.width = Math.max(0, 100 - (kills / 25) * 100) + '%'; // убывает только от убийств — респавн ботов не лечит полоску
-  elTbRn.textContent=Math.max(0,25-kills); // сколько фрагов осталось до победы
+  elTbR.style.width = Math.max(0, 100 - (kills / 15) * 100) + '%'; // убывает только от убийств — респавн ботов не лечит полоску
+  elTbRn.textContent=Math.max(0,15-kills); // сколько фрагов осталось до победы
   // ---- перегрузка: индикатор G, вуаль, G-LOC, redout ----
   elG.textContent=player.g.toFixed(1);
   elG.classList.toggle('hot', player.g>9||player.g<0.35);
@@ -1570,6 +1568,33 @@ function togglePause(){
     tryLock();
   }
 }
+function returnToMenu(){
+  state='menu';
+  $('ov-pause').classList.add('hidden');
+  $('ov-death').classList.add('hidden');
+  $('ov-victory').classList.add('hidden');
+  $('hud').classList.remove('on');
+  $('ov-start').classList.remove('hidden'); // показываем стартовое меню
+  if(document.pointerLockElement) document.exitPointerLock();
+  // сброс камеры и самолёта в исходное состояние для меню
+  player.pos.set(0,300,0);
+  player.quat.set(0,0,0,1);
+  camQ.copy(player.quat); camInit=false;
+  // тихий сброс боя: без него «ВЗЛЕТЕТЬ» продолжил бы прошлый вылет (hp/фраги/боты/снаряды)
+  player.alive=true; player.hp=100; player.speed=55; player.throttle=0.65;
+  player.g=1; player.glocT=0; player.gPk=1; player.lastHit=99; player.smokeT=0; player.trailT=0;
+  player.mesh.visible=true;
+  for(const b of bullets){ b.on=false; b.mesh.visible=false; }
+  for(const m of missiles) scene.remove(m.mesh);
+  missiles.length=0;
+  for(const p of parts){ p.on=false; p.spr.visible=false; }
+  for(const b of boomLights){ b.t=0; b.l.visible=false; }
+  for(const b of bots) resetBot(b);
+  kills=0; camShake=0; dmgA=0; respawnQ.length=0; warnFlags={};
+  lockTarget=null; deadShown=false; lastKiller=null;
+  mAccX=0; mAccY=0; mFltX=0; mFltY=0; lastMX=null; lastMY=null;
+  mouseDown=false; zoomHeld=false;
+}
 function showVictory(){
   state='win';
   $('victory-kills').textContent=kills;
@@ -1586,6 +1611,9 @@ function showDeath(){
 $('btn-start').addEventListener('click', startGame);
 $('btn-again').addEventListener('click', restart);
 $('btn-victory').addEventListener('click', ()=>{ $('ov-victory').classList.add('hidden'); restart(); });
+$('btn-menu-pause').addEventListener('click', e=>{ e.stopPropagation(); returnToMenu(); }); // stopPropagation: клик по оверлею паузы иначе возобновил бы бой
+$('btn-menu-death').addEventListener('click', returnToMenu);
+$('btn-menu-victory').addEventListener('click', returnToMenu);
 $('ov-pause').addEventListener('click', ()=>{ if(state==='pause'){ togglePause(); tryLock(); } });
 
 // ================= ГЛАВНЫЙ ЦИКЛ =================
@@ -1597,17 +1625,19 @@ function animate(){
   if(state!=='pause'){
     time+=dt;
     if(state==='menu') updateMenuPilot(dt);
-    else if(state==='play'){ updatePlayer(dt); computeLock(); }
-    else if(state==='dead'){
-      deathT+=dt;
-      if(deathT>1.4&&!deadShown){ deadShown=true; showDeath(); }
+    else{ // игровая симуляция — в меню не выполняется
+      if(state==='play'){ updatePlayer(dt); computeLock(); }
+      else if(state==='dead'){
+        deathT+=dt;
+        if(deathT>1.4&&!deadShown){ deadShown=true; showDeath(); }
+      }
+      if(kills>=15 && state==='play'){ showVictory(); return; } // победа — выходим из кадра до обновлений
+      updateBots(dt);
+      updateBullets(dt);
+      updateMissiles(dt);
+      updateParticles(dt);
+      updateBoomLights(dt);
     }
-    if(kills>=25 && state==='play'){ showVictory(); return; } // победа — выходим из кадра до обновлений
-    updateBots(dt);
-    updateBullets(dt);
-    updateMissiles(dt);
-    updateParticles(dt);
-    updateBoomLights(dt);
     // облака дрейфуют вокруг игрока
     for(const c of clouds){
       if(c.position.x-player.pos.x>14000) c.position.x-=28000;
