@@ -274,8 +274,8 @@ renderer.setClearColor(0xdd8250);
 document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0xdd8250, 2500, 9500);
-const camera = new THREE.PerspectiveCamera(74, window.innerWidth/window.innerHeight, 0.3, 45000);
+scene.fog = new THREE.Fog(0xdd8250, 3500, 26000);
+const camera = new THREE.PerspectiveCamera(74, window.innerWidth/window.innerHeight, 0.3, 120000);
 
 // радиальная текстура (солнце, облака, частицы)
 function radialTex(stops, size){
@@ -334,12 +334,12 @@ scene.add(new THREE.AmbientLight(0x33222e, 0.4));
 // ================= ОБЛАКА =================
 const cloudTex = radialTex([[0,'rgba(255,236,228,0.6)'],[0.55,'rgba(255,236,228,0.28)'],[1,'rgba(255,236,228,0)']],256);
 const clouds=[];
-for(let i=0;i<64;i++){
+for(let i=0;i<96;i++){
   const m = new THREE.SpriteMaterial({map:cloudTex, transparent:true, opacity:rand(0.35,0.75), depthWrite:false});
   const s = new THREE.Sprite(m);
   const w = rand(500,1300);
   s.scale.set(w, w*rand(0.4,0.6), 1);
-  s.position.set(rand(-14000,14000), rand(550,1700), rand(-14000,14000));
+  s.position.set(rand(-26000,26000), rand(800,3200), rand(-26000,26000));
   scene.add(s); clouds.push(s);
 }
 
@@ -357,7 +357,7 @@ function terrainHeight(x,z){
 }
 
 (function buildTerrain(){
-  const SIZE=48000, SEG=176;
+  const SIZE=100000, SEG=256; // карта 100×100 км — зона боя 25 км радиусом, детализация сохранена увеличением сетки
   let geo = new THREE.PlaneGeometry(SIZE, SIZE, SEG, SEG);
   geo.rotateX(-Math.PI/2);
   const pa = geo.attributes.position;
@@ -396,7 +396,7 @@ function terrainHeight(x,z){
 
 // вода
 const water = new THREE.Mesh(
-  new THREE.PlaneGeometry(40000,40000),
+  new THREE.PlaneGeometry(100000,100000),
   new THREE.MeshPhongMaterial({color:0x1c5a80, transparent:true, opacity:0.9, shininess:130, specular:0x99bbff})
 );
 water.rotation.x = -Math.PI/2;
@@ -515,7 +515,7 @@ function resetBot(b){
     b.vel.set(0,0,0);
     return;
   }
-  const a=rand(0,Math.PI*2), r=rand(950,1900);
+  const a=rand(0,Math.PI*2), r=rand(4000,5200); // спавн красных в 4–5.2 км от игрока
   b.pos.set(player.pos.x+Math.cos(a)*r, 0, player.pos.z+Math.sin(a)*r);
   b.pos.y = Math.max(player.pos.y+rand(-80,350), Math.max(terrainHeight(b.pos.x,b.pos.z),-2)+230);
   b.hp=30; b.alive=true; b.mesh.visible=true; b.speed=rand(46,56);
@@ -823,7 +823,7 @@ function computeLock(){
     if(!b.alive||b.team!=='red') continue;
     _v6.copy(b.pos).sub(player.pos);
     const d=_v6.length();
-    if(d<10||d>2400) continue;
+    if(d<10||d>5000) continue;
     _v6.multiplyScalar(1/d);
     const ang=Math.acos(clamp(_v5.dot(_v6),-1,1));
     if(ang<best){ best=ang; lockTarget=b; }
@@ -835,7 +835,7 @@ function fireMissile(){
   if(player.cdM>0) return;
   player.ammo--; player.cdM=1.2;
   computeLock();
-  const m={mesh:new THREE.Group(), dir:V3(), speed:player.speed+35, target:lockTarget, life:10, trailT:0};
+  const m={mesh:new THREE.Group(), dir:V3(), speed:player.speed+35, target:lockTarget, life:14, trailT:0};
   const body=new THREE.Mesh(misGeoBody,misMat); body.rotation.x=Math.PI/2; m.mesh.add(body);
   const nose=new THREE.Mesh(misGeoNose,misMat); nose.rotation.x=-Math.PI/2; nose.position.z=-0.72; m.mesh.add(nose);
   for(let i=0;i<4;i++){
@@ -1032,13 +1032,13 @@ function updateBots(dt){
           if(!e.alive||e.team!=='red') continue;
           const dp=e.pos.distanceTo(player.pos), ds=b.pos.distanceTo(e.pos);
           const sc=dp*0.65+ds*0.35;
-          if(dp<1700&&ds<1700&&sc<best){ best=sc; T=e; }
+          if(dp<4200&&ds<4200&&sc<best){ best=sc; T=e; }
         }
       }
     }
     b.tgt=T;
     const distT=T?b.pos.distanceTo(T.pos):1e9;
-    const engage=!!T&&distT<1500;
+    const engage=!!T&&distT<5200; // на большой карте атака начинается с ~5 км
     const target=_v4;
     const agl=b.pos.y-Math.max(terrainHeight(b.pos.x,b.pos.z),-2);
     if(agl<110){ // избежать земли
@@ -1058,7 +1058,7 @@ function updateBots(dt){
         .addScaledVector(player.vel,0.6);
     } else { // патруль вокруг игрока
       b.orbitA+=dt*0.22*b.orbitDir;
-      target.copy(player.pos).add(_v5.set(Math.cos(b.orbitA)*950, 140+Math.sin(b.orbitA*0.7)*90, Math.sin(b.orbitA)*950));
+      target.copy(player.pos).add(_v5.set(Math.cos(b.orbitA)*4300, 160+Math.sin(b.orbitA*0.7)*120, Math.sin(b.orbitA)*4300));
     }
     if(engage&&!botFront(b,T)&&distT<380&&b.threatT<=0){
       b.threatT=rand(2.2,4);
@@ -1067,7 +1067,7 @@ function updateBots(dt){
     }
     if(b.threatT>0) b.threatT-=dt;
     steerToward(b, target, dt);
-    const tSpd = engage?68:(b.team==='blue'?clamp(player.speed+8+b.pos.distanceTo(target)*0.1,49,95):48);
+    const tSpd = engage?74:(b.team==='blue'?clamp(player.speed+8+b.pos.distanceTo(target)*0.1,49,95):55);
     b.speed += (tSpd-b.speed)*(1-Math.exp(-dt*0.5));
     _v5.copy(FWD).applyQuaternion(b.quat);
     b.pos.addScaledVector(_v5, b.speed*dt);
@@ -1104,15 +1104,15 @@ function updatePlayer(dt){
   // управление (угловые скорости сглаживаются)
   const auth=clamp(player.speed/44,0.35,1.08);
   // мышь — основное управление (крен/тангаж), клавиши — альтернатива; отклик живее (~1.7x от 0.0015)
-  const mR=clamp(-mAccX*0.0026,-1,1), mP=clamp(-mAccY*0.0022,-1,1);
-  const mDec=Math.exp(-dt*2.6); mAccX*=mDec; mAccY*=mDec; // манёвр доигрывается, но без «залипания»
-  const mFl=1-Math.exp(-dt*6); // ход команды: плавный, но живой — без вялости
+  const mR=clamp(-mAccX*0.003,-1,1), mP=clamp(-mAccY*0.0025,-1,1); // «золотая середина»: реагирует сразу (WT-style)
+  const mDec=Math.exp(-dt*5); mAccX*=mDec; mAccY*=mDec; // отпускание быстрое, но без телепорта ручки
+  const mFl=1-Math.exp(-dt*8); // ход команды живой, но сглаженный
   mFltX+=(mR-mFltX)*mFl; mFltY+=(mP-mFltY)*mFl;
   const gloc=player.glocT>0; // G-LOC: сознание потеряно — управление отключено
   const tP=clamp((keys.KeyS?1:0)-(keys.KeyW?1:0)+mFltY,-1,1);
   const tR=clamp((keys.KeyA?1:0)-(keys.KeyD?1:0)+mFltX,-1,1);
   const tY=(keys.KeyQ?1:0)-(keys.KeyE?1:0);
-  const sm=1-Math.exp(-dt*6.5);
+  const sm=1-Math.exp(-dt*10); // клавиши без задержки
   player.ctrl.p+=((gloc?0:tP)-player.ctrl.p)*sm;
   player.ctrl.r+=((gloc?0:tR)-player.ctrl.r)*sm;
   player.ctrl.y+=((gloc?0:tY)-player.ctrl.y)*sm;
@@ -1120,12 +1120,12 @@ function updatePlayer(dt){
   const wP=clamp(player.ctrl.p*1.35*auth,-1.5,1.5);
   const wR=clamp(player.ctrl.r*2.5*auth,-1.5,1.5);
   const wY=clamp(player.ctrl.y*0.78*auth,-1.5,1.5);
-  // ===== ПЕРЕГРУЗКА: G = 1 + V·ω(тангаж) / 9.8 =====
-  const gT=1+player.speed*wP/9.8;
+  // ===== ПЕРЕГРУЗКА: G = 1 + V·ω(тангаж) / 12.5 =====
+  const gT=1+player.speed*wP/12.5; // делитель поднят: плавные виражи ≤4–5G, LOC только затяжная тяга на скорости
   player.g+=(gT-player.g)*(1-Math.exp(-dt*3.5)); // медленнее набирается — краткий рывок не «в темноту»
   if(player.glocT>0){ player.glocT-=dt; if(player.glocT<=0) player.glocT=-0.001; } // фаза блэкаута
   else if(player.glocT<0){ player.glocT-=dt; if(player.glocT<-1.2) player.glocT=0; } // плавный выход
-  else if(player.g>11.5){ // G-LOC: только при затяжной тяге (2–3 с без сознания)
+  else if(player.g>12){ // G-LOC: только затяжной набор перегрузки
     player.gPk=player.g; // фиксируем пиковую перегрузку — её и показываем до конца выхода
     player.glocT=2+rand(0,1);
     toast('ПОТЕРЯ СОЗНАНИЯ! Перегрузка '+player.g.toFixed(1)+'G');
@@ -1147,7 +1147,7 @@ function updatePlayer(dt){
     player.mesh.rotateOnWorldAxis(AY,_v1.y*0.55*dt);
   }
   // инверсионные следы с законцовок крыльев при высокой перегрузке
-  if(player.g>7){
+  if(player.g>5.5){
     player.trailT-=dt;
     if(player.trailT<=0){
       player.trailT=0.045;
@@ -1176,8 +1176,8 @@ function updatePlayer(dt){
     player.pos.y-=stall*24*dt;
   }
   // потолок
-  if(player.pos.y>3600){
-    player.pos.y=3600;
+  if(player.pos.y>8000){
+    player.pos.y=8000;
     player.speed=Math.min(player.speed,MIN_SPEED+6);
   }
   // столкновение с землёй
@@ -1206,9 +1206,9 @@ function updatePlayer(dt){
   else player.cd=0;
   // граница зоны боя
   const dcen=Math.sqrt(player.pos.x*player.pos.x+player.pos.z*player.pos.z);
-  if(dcen<12500) warnFlags.bound=false;
-  if(dcen>12500 && !warnFlags.bound){ warnFlags.bound=true; toast('Граница зоны боя! Разворачивайтесь'); }
-  if(dcen>14200){
+  if(dcen<25000) warnFlags.bound=false;
+  if(dcen>25000 && !warnFlags.bound){ warnFlags.bound=true; toast('Граница зоны боя! Разворачивайтесь'); }
+  if(dcen>28000){
     _v2.set(-player.pos.x,0,-player.pos.z).normalize();
     _v1.copy(FWD).applyQuaternion(player.quat); _v1.y=0; _v1.normalize();
     const cross=_v1.x*_v2.z-_v1.z*_v2.x;
@@ -1297,7 +1297,7 @@ function updateBrackets(){
     for(const b of sorted){
       if(bi>=6) break;
       const d=b.pos.distanceTo(player.pos);
-      if(d>3200) continue;
+      if(d>10000) continue;
       _v5.copy(b.pos).applyMatrix4(camera.matrixWorldInverse);
       if(_v5.z>-0.5) continue; // цель позади камеры
       _v6.copy(b.pos).project(camera);
@@ -1495,7 +1495,7 @@ function updateHUD(dt){
       const dx=b.pos.x-player.pos.x, dz=b.pos.z-player.pos.z;
       const dist=Math.sqrt(dx*dx+dz*dz);
       const rel=Math.atan2(dx,-dz)-hdg/57.2958; // пеленг относительно курса
-      const rr=Math.min(dist/3200,1)*52;
+      const rr=Math.min(dist/9000,1)*52;
       c.setAttribute('cx',(64+Math.sin(rel)*rr).toFixed(1));
       c.setAttribute('cy',(64-Math.cos(rel)*rr).toFixed(1));
       c.setAttribute('fill', b.team==='blue'?'#6aaef0':(b===lockTarget?'#ffd24a':'#ff5a4a'));
