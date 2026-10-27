@@ -111,6 +111,37 @@
   .hint{margin-top:12px;font-size:11px;color:var(--amber-dim)}
   .stats{margin-top:16px;font-size:19px;color:#ffcf8f;font-family:monospace}
   #ov-death .title{color:#ff7a5e;text-shadow:0 2px 14px rgba(255,50,30,.55)}
+  /* ---------- ангар ---------- */
+  .hangar-panel{max-width:780px;max-height:90vh;overflow-y:auto;text-align:left;padding:26px 30px}
+  .hangar-panel .title{text-align:center}
+  .hangar-panel .subtitle{text-align:center}
+  .wallet{display:flex;justify-content:center;gap:14px;margin:14px 0 4px;font-family:monospace;font-size:15px;color:#ffd27a;font-weight:700}
+  .wallet .sep{color:var(--amber-dim)}
+  .tier-h{margin:14px 0 6px;font-size:11px;letter-spacing:3px;color:var(--amber-dim);font-weight:800;border-bottom:1px solid rgba(255,180,110,.18);padding-bottom:4px}
+  .plane-card{display:flex;align-items:center;gap:12px;padding:8px 10px;border:1px solid rgba(255,180,110,.14);border-radius:7px;margin-bottom:6px;background:rgba(0,0,0,.18)}
+  .plane-card.sel{border-color:#d98a4a;background:rgba(217,138,74,.09);box-shadow:0 0 14px rgba(217,138,74,.18)}
+  .tier-badge{flex:none;width:30px;height:30px;border-radius:50%;border:1.5px solid #d98a4a;color:#ffd9a0;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;font-family:monospace}
+  .pc-main{flex:1;min-width:0}
+  .pc-name{font-size:14.5px;font-weight:800;color:#ffe2b8;letter-spacing:.5px}
+  .pc-spec{font-family:monospace;font-size:10.5px;color:var(--amber-dim);margin-top:2px}
+  .pc-btn{flex:none;margin:0;padding:8px 14px;font-size:11.5px;letter-spacing:1.5px}
+  .pc-btn:disabled{opacity:.45;cursor:default;pointer-events:none}
+  .pc-btn.owned{border-color:#7a9a5a;color:#b8d890}
+  .pc-btn.owned:hover{background:#5a7a42;color:#141c08;box-shadow:0 0 14px rgba(120,180,80,.35)}
+  .upg-box{margin-top:16px;border:1px solid rgba(255,180,110,.2);border-radius:8px;padding:12px 14px;background:rgba(0,0,0,.22)}
+  .upg-title{font-size:12px;letter-spacing:2.5px;color:#ffd9a0;font-weight:800;margin-bottom:9px}
+  .upg-row{display:flex;align-items:center;gap:10px;padding:5px 0}
+  .upg-name{width:120px;font-size:11.5px;font-weight:700;color:#e8cfa8;letter-spacing:1px}
+  .upg-name small{display:block;font-weight:400;color:var(--amber-dim);font-size:9.5px;letter-spacing:.3px}
+  .pips{display:flex;gap:4px;width:92px}
+  .pip{width:13px;height:13px;border-radius:50%;border:1.5px solid rgba(255,180,110,.4)}
+  .pip.on{background:#d98a4a;border-color:#ffb060;box-shadow:0 0 7px rgba(255,140,60,.55)}
+  .upg-cost{font-family:monospace;font-size:11px;color:#ffd27a;width:110px}
+  .upg-btn{margin:0;padding:6px 12px;font-size:10.5px;letter-spacing:1.5px}
+  .upg-btn:disabled{opacity:.4;cursor:default;pointer-events:none}
+  .reset-row{text-align:center;margin-top:10px}
+  .reset-row button{margin:0;padding:5px 12px;font-size:9.5px;letter-spacing:1.5px;border-color:#6a4a42;color:#a88478}
+  .reset-row button:hover{background:#6a4a42;color:#1c0f0a;box-shadow:none}
   #err{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;color:#ffba90;background:#160b10;font-size:15px;text-align:center;padding:30px;line-height:1.8}
   .hidden{display:none!important}
 </style>
@@ -221,7 +252,8 @@
       <div class="ck"><span>M</span>звук вкл/выкл</div>
       <div class="ck"><span>Esc / R</span>пауза / новый вылет</div>
     </div>
-    <button id="btn-start">ВЗЛЕТЕТЬ ▸</button>
+    <button id="btn-start">ВЗЛЕТЕТЬ ▸</button><button id="btn-hangar" class="secondary" style="margin-left:10px">АНГАР ▸</button>
+    <div class="hint" id="menu-wallet" style="margin-top:10px;font-family:monospace;font-size:12px;color:#ffd27a"></div>
     <div class="hint">или нажмите Enter · клик по экрану захватывает мышь · самолёт летит только вперёд!</div>
   </div>
 </div>
@@ -231,6 +263,7 @@
     <div class="title" id="death-title">САМОЛЁТ СБИТ</div>
     <div class="subtitle">небо сегодня не ваше</div>
     <div class="stats">Сбито врагов: <span id="death-kills">0</span></div>
+    <div class="stats" id="death-pay" style="font-size:15px;color:#b8d890"></div>
     <div class="hint" id="death-by" style="font-size:12px"></div>
     <button id="btn-again">ЛЕТИТЬ СНОВА ▸</button><button id="btn-menu-death" class="secondary" style="margin-left:10px">В МЕНЮ</button>
     <div class="hint">или нажмите R / Enter</div>
@@ -250,7 +283,21 @@
     <div class="title" style="color:#7ec850">ПОБЕДА</div>
     <div class="subtitle">Небо очищено от врагов</div>
     <div class="stats">Сбито врагов: <span id="victory-kills">0</span></div>
+    <div class="stats" id="victory-pay" style="font-size:15px;color:#b8d890"></div>
     <button id="btn-victory">ЛЕТИТЬ СНОВА ▸</button><button id="btn-menu-victory" class="secondary" style="margin-left:10px">В МЕНЮ</button>
+  </div>
+</div>
+
+<div id="ov-hangar" class="overlay hidden">
+  <div class="panel hangar-panel">
+    <div class="title" style="font-size:26px">АНГАР</div>
+    <div class="subtitle">советская ветка · ранги I–V</div>
+    <div class="wallet"><span id="w-money">0 ₽</span><span class="sep">·</span><span id="w-xp">0 опыта</span></div>
+    <div id="hangar-list"></div>
+    <div id="upg-box" class="upg-box"></div>
+    <div class="reset-row"><button id="btn-prog-reset">СБРОСИТЬ ПРОГРЕСС</button></div>
+    <div style="text-align:center;margin-top:14px"><button id="btn-hangar-close">ЗАКРЫТЬ</button></div>
+    <div class="hint" style="text-align:center">Рубли — за бои (фраги, победа) · опыт — на улучшения самолёта · прогресс сохраняется автоматически</div>
   </div>
 </div>
 
@@ -273,10 +320,102 @@ const AX=V3(1,0,0), AY=V3(0,1,0), AZ=V3(0,0,1), FWD=V3(0,0,-1), WUP=V3(0,1,0);
 const $ = id => document.getElementById(id);
 
 // ================= КОНСТАНТЫ =================
-const MIN_SPEED=24, MAX_SPEED=82, STALL=25;
+// (старый якорь баланса hp100/82 м/с теперь соответствует рангу III — Як-1/МиГ-3 в PLANES)
 const BOT_NAMES=['Барон','Факел','Гриф','Ворон','Шторм'];
 const ALLY_NAMES=['Сокол','Стрела','Клим','Тайфун'];
 const ALLY_SLOTS=[[-46,10,58],[46,10,58],[-28,42,100],[28,42,100]]; // [вправо, вверх, назад] от игрока
+
+// ================= САМОЛЁТЫ: СОВЕТСКАЯ ВЕТКА (ранги I–V) =================
+// Баланс: ТТХ calibrated вокруг прежнего баланса игры (hp 100, 82 м/с, поворот 1.0, урон ~12) = ранг III
+const PLANES=[
+ {id:'po2',  name:'По-2',        tier:1, cost:0,     hp:70,  maxSpd:46, minSpd:20, turn:1.30, climb:30, guns:'1 × 7.62 мм ШКАС',        dmg:6,  mono:false, desc:'Учебный биплан. Медленный, но очень послушный.'},
+ {id:'i153', name:'И-153 Чайка', tier:1, cost:700,   hp:80,  maxSpd:54, minSpd:22, turn:1.38, climb:26, guns:'2 × 7.62 мм ШКАС',        dmg:7,  mono:false, desc:'Последний биплан-истребитель. Король виража.'},
+ {id:'i16',  name:'И-16 тип 10', tier:2, cost:2200,  hp:95,  maxSpd:63, minSpd:25, turn:1.15, climb:24, guns:'2 × 12.7 мм БС',          dmg:9,  mono:true,  desc:'Первый серийный моноплан. Короткий и вертлявый.'},
+ {id:'lagg3',name:'ЛаГГ-3',      tier:2, cost:3600,  hp:105, maxSpd:67, minSpd:26, turn:1.00, climb:22, guns:'1 × 20 мм + 2 × 7.62 мм', dmg:11, mono:true,  desc:'«Лакированный гарантированный гроб» — но очень крепкий.'},
+ {id:'yak1', name:'Як-1',        tier:3, cost:6500,  hp:100, maxSpd:71, minSpd:26, turn:1.10, climb:20, guns:'1 × 20 мм + 2 × 12.7 мм', dmg:12, mono:true,  desc:'Основа истребительной авиации 1942 года.'},
+ {id:'mig3', name:'МиГ-3',       tier:3, cost:8000,  hp:95,  maxSpd:78, minSpd:28, turn:0.90, climb:21, guns:'2 × 12.7 мм + 2 × 7.62',  dmg:10, mono:true,  desc:'Высотный перехватчик. Быстрый, но тяжёлый в вираже.'},
+ {id:'la5',  name:'Ла-5',        tier:4, cost:13000, hp:115, maxSpd:79, minSpd:27, turn:1.05, climb:19, guns:'2 × 20 мм ШВАК',          dmg:14, mono:true,  desc:'Мощный и живучий. Звезда Сталинграда.'},
+ {id:'yak9', name:'Як-9',        tier:4, cost:15000, hp:110, maxSpd:81, minSpd:27, turn:1.08, climb:19, guns:'1 × 20 мм + 2 × 12.7 мм', dmg:13, mono:true,  desc:'Универсал: пушечный кулак и высокая скорость.'},
+ {id:'yak3', name:'Як-3',        tier:5, cost:24000, hp:105, maxSpd:83, minSpd:26, turn:1.15, climb:17, guns:'1 × 20 мм + 2 × 12.7 мм', dmg:13, mono:true,  desc:'Легчайший истребитель войны. Гроза «мессеров» на малых.'},
+ {id:'la7',  name:'Ла-7',        tier:5, cost:30000, hp:120, maxSpd:86, minSpd:28, turn:1.10, climb:17, guns:'2 × 20 мм ШВАК',          dmg:15, mono:true,  desc:'Вершина ветки. На нём закончил войну Кожедуб.'}
+];
+const TIER_ROMAN=['I','II','III','IV','V'];
+// улучшения самолёта за опыт: 4 ветки × 5 уровней
+const UPG_BRANCHES=[
+ {id:'eng', name:'ДВИГАТЕЛЬ',  hint:'+4% макс. скорости'},
+ {id:'dur', name:'ПРОЧНОСТЬ',  hint:'+8 HP'},
+ {id:'hdl', name:'УПРАВЛЕНИЕ', hint:'+6% манёвренности'},
+ {id:'gun', name:'ВООРУЖЕНИЕ', hint:'+8% урона'}
+];
+const UPG_COST=[200,350,600,900,1300]; // опыт за 1-й..5-й уровень ветки
+
+// ================= ПРОГРЕСС: ВАЛЮТА / ОПЫТ / АНГАР =================
+const PROG_KEY='wog_progress_v1';
+let PROG={money:1000, xp:0, owned:['po2'], sel:'po2', upg:{}};
+function loadProg(){
+  try{ const s=localStorage.getItem(PROG_KEY); if(s){ const p=JSON.parse(s); if(p&&p.owned&&p.sel&&PLANES.some(x=>x.id===p.sel)) PROG=p; } }catch(e){}
+  if(!PROG.owned.includes('po2')) PROG.owned.push('po2');
+  if(!PROG.owned.includes(PROG.sel)) PROG.sel='po2';
+  if(!PROG.upg) PROG.upg={};
+  for(const pl of PLANES) if(!PROG.upg[pl.id]) PROG.upg[pl.id]={eng:0,dur:0,hdl:0,gun:0};
+}
+function saveProg(){ try{ localStorage.setItem(PROG_KEY, JSON.stringify(PROG)); }catch(e){} }
+loadProg();
+function planeStats(id){ // ТТХ самолёта + улучшения (игрок)
+  const p=PLANES.find(x=>x.id===id)||PLANES[0];
+  const u=PROG.upg[p.id]||{eng:0,dur:0,hdl:0,gun:0};
+  return { id:p.id, name:p.name, tier:p.tier, mono:p.mono,
+    maxSpd:p.maxSpd*(1+u.eng*0.04),
+    minSpd:p.minSpd,
+    hp:p.hp+u.dur*8,
+    turn:p.turn*(1+u.hdl*0.06),
+    climb:p.climb,
+    dmg:p.dmg*(1+u.gun*0.08) };
+}
+function planeStatsBot(pl){ // боты без улучшений; hp бота — 35% от полного ТТХ (ИИ должен оставаться сбиваемым, как раньше 30-35 против 100)
+  return { id:pl.id, name:pl.name, tier:pl.tier, mono:pl.mono,
+    maxSpd:pl.maxSpd, minSpd:pl.minSpd, turn:pl.turn, climb:pl.climb, dmg:pl.dmg,
+    hp:Math.round(pl.hp*0.35) };
+}
+// награды за бой (экономика): фраг игроком 120₽/70оп, фраг союзника 50₽/30оп, краш красного 40₽/20оп,
+// участие 200₽/120оп, победа +600₽/+350оп сверху. Ла-7 (30000₽) ≈ 12-15 побед — долгая, но достижимая цель.
+let battlePay={money:0,xp:0};
+function payReward(m,x){ battlePay.money+=m; battlePay.xp+=x; }
+function applyRewards(victory){
+  const m=battlePay.money+(victory?600:200), x=battlePay.xp+(victory?350:120);
+  PROG.money+=m; PROG.xp+=x; saveProg();
+  return {money:m,xp:x};
+}
+
+// ================= МАТЧМЕЙКИНГ РАНГОВ =================
+// Пул рангов ботов относительно ранга игрока: никогда не слабее игрока (кроме топов), у топов чуть ниже.
+const MM_POOL={1:[[1,.5],[2,.3],[3,.2]], 2:[[2,.45],[3,.35],[4,.2]], 3:[[3,.4],[4,.35],[5,.25]], 4:[[3,.25],[4,.4],[5,.35]], 5:[[4,.45],[5,.55]]};
+function rollBotTier(T){
+  let r=Math.random();
+  for(const [t,w] of MM_POOL[T]){ r-=w; if(r<=0) return t; }
+  return T;
+}
+function setupTiers(){ // состав команд ЗЕРКАЛЬНЫЙ: у красных тот же набор рангов, что у синих — баланс гарантирован
+  const T=(PLANES.find(p=>p.id===PROG.sel)||PLANES[0]).tier;
+  const allyT=[T, rollBotTier(T), rollBotTier(T), rollBotTier(T), rollBotTier(T)]; // игрок + 4 ведомых
+  const redT=allyT.slice(1).sort(()=>Math.random()-0.5); // 5-й красный «ведущий» зеркалит игрока: его ранг = T
+  ALLIES.forEach((b,i)=>assignBotPlane(b, allyT[i+1]));
+  bots.filter(b=>b.team==='red').forEach((b,i)=>assignBotPlane(b, i===0?T:redT[i-1]));
+}
+function assignBotPlane(b, tier){ // назначить самолёт по рангу (модель перестраивается только при смене)
+  const opts=PLANES.filter(p=>p.tier===tier);
+  const pl=opts[Math.floor(Math.random()*opts.length)];
+  b.pst=planeStatsBot(pl);
+  if(b.planeBuilt!==pl.id){
+    scene.remove(b.mesh);
+    const pal = b.team==='blue'
+      ? {body:0x4a5d3a, wing:0x76854e, accent:0x9a4a1f, star:true, mono:pl.mono}
+      : {body:0xb02a20, wing:0xc94b3c, accent:0x801812, cross:true, mono:pl.mono};
+    b.mesh=buildPlane(pal); scene.add(b.mesh);
+    b.pos=b.mesh.position; b.quat=b.mesh.quaternion; b.prop=b.mesh.userData.prop;
+    b.planeBuilt=pl.id;
+  }
+}
 
 // ================= РЕНДЕР / СЦЕНА =================
 const renderer = new THREE.WebGLRenderer({antialias:true});
@@ -435,16 +574,18 @@ function buildPlane(p){
   // хвост
   add(new THREE.BoxGeometry(3.1,0.09,1.05), mWing, 0,0.22,3.45);
   add(new THREE.BoxGeometry(0.09,1.25,1.15), mAcc, 0,0.8,3.5);
-  // крылья (биплан)
-  add(new THREE.BoxGeometry(9.6,0.14,1.6), mWing, 0,1.42,-0.55);
-  add(new THREE.BoxGeometry(9.0,0.14,1.5), mWing, 0,-0.18,-0.35);
-  // стойки
-  for(const sx of [-3.1,-1.55,1.55,3.1]) add(new THREE.BoxGeometry(0.09,1.6,0.12), mDark, sx,0.62,-0.45);
-  for(const sx of [-0.6,0.6]) add(new THREE.BoxGeometry(0.09,1.6,0.12), mDark, sx,0.62,-0.5);
+  // крылья: биплан (ранг I) или моноплан (ранг II+)
+  add(new THREE.BoxGeometry(9.6,0.14,1.6), mWing, 0,p.mono?0.35:1.42,-0.55);
+  if(!p.mono) add(new THREE.BoxGeometry(9.0,0.14,1.5), mWing, 0,-0.18,-0.35);
+  // стойки — только у биплана
+  if(!p.mono){
+    for(const sx of [-3.1,-1.55,1.55,3.1]) add(new THREE.BoxGeometry(0.09,1.6,0.12), mDark, sx,0.62,-0.45);
+    for(const sx of [-0.6,0.6]) add(new THREE.BoxGeometry(0.09,1.6,0.12), mDark, sx,0.62,-0.5);
+  }
   // элероны
   for(const sx of [-2.6,2.6]){
-    add(new THREE.BoxGeometry(2.6,0.06,0.3), mAcc, sx,1.42,0.32);
-    add(new THREE.BoxGeometry(2.4,0.06,0.3), mAcc, sx,-0.18,0.3);
+    add(new THREE.BoxGeometry(2.6,0.06,0.3), mAcc, sx,p.mono?0.35:1.42,0.32);
+    if(!p.mono) add(new THREE.BoxGeometry(2.4,0.06,0.3), mAcc, sx,-0.18,0.3);
   }
   // кабина + пилот
   add(new THREE.BoxGeometry(0.66,0.34,1.0), mDark, 0,0.5,0.42);
@@ -468,7 +609,14 @@ function buildPlane(p){
     const w = add(new THREE.CylinderGeometry(0.3,0.3,0.16,10), mDark, s*0.9,-1.15,-1.85);
     w.rotation.z = Math.PI/2;
   }
-  // опознавательные знаки
+  // опознавательные знаки: красные звёзды (ВВС РККА), круглелы, кресты
+  if(p.star){
+    const wy = p.mono?0.43:1.5;
+    for(const s of [-1,1]){
+      const st = new THREE.Mesh(new THREE.PlaneGeometry(1.05,1.05), new THREE.MeshBasicMaterial({map:starTex(),transparent:true,depthWrite:false}));
+      st.position.set(s*2.7,wy,-0.55); st.rotation.x=-Math.PI/2; g.add(st);
+    }
+  }
   if(p.roundel){
     const mw = new THREE.MeshBasicMaterial({color:0xf2ead8});
     const mr = new THREE.MeshBasicMaterial({color:0xb03a2a});
@@ -493,8 +641,20 @@ function buildPlane(p){
   return g;
 }
 
-const PAL_PLAYER = {body:0x708238, wing:0xb0a06c, accent:0x9a4a1f, roundel:true, cross:false};
-const PAL_BOT    = {body:0xb02a20, wing:0xc94b3c, accent:0x801812, roundel:false, cross:true};
+// красная звезда ВВС РККА (текстура-канвас, кэшируется)
+let starTexCache=null;
+function starTex(){
+  if(starTexCache) return starTexCache;
+  const c=document.createElement('canvas'); c.width=c.height=64;
+  const g=c.getContext('2d'); g.translate(32,32); g.beginPath();
+  for(let i=0;i<10;i++){ const r=i%2?12:27, a=i*Math.PI/5-Math.PI/2; g.lineTo(Math.cos(a)*r, Math.sin(a)*r); }
+  g.closePath(); g.fillStyle='#c8302a'; g.fill();
+  g.lineWidth=2.5; g.strokeStyle='#e8d8b0'; g.stroke();
+  starTexCache=new THREE.CanvasTexture(c); return starTexCache;
+}
+
+const PAL_PLAYER = {body:0x556b2f, wing:0x8f9e64, accent:0x9a4a1f, star:true, mono:false};
+const PAL_BOT    = {body:0xb02a20, wing:0xc94b3c, accent:0x801812, cross:true, mono:false};
 
 // ================= ИГРОК =================
 const player = {
@@ -502,7 +662,8 @@ const player = {
   speed:55, throttle:0.65, hp:100, alive:true,
   ammo:4, ammoT:0, cd:0, cdM:0, lastHit:99, smokeT:0,
   ctrl:{p:0,r:0,y:0}, vel:V3(),
-  g:1, gPk:1, glocT:0, trailT:0
+  g:1, gPk:1, glocT:0, trailT:0,
+  pst:null, hpMax:100, meshBuilt:null
 };
 scene.add(player.mesh);
 player.pos = player.mesh.position;
@@ -510,18 +671,33 @@ player.quat = player.mesh.quaternion;
 player.prop = player.mesh.userData.prop;
 player.pos.set(0,300,0);
 
+let PST=null; // ТТХ самолёта игрока (заполняет applyPlayerPlane)
+function applyPlayerPlane(){ // применить выбранный в ангаре самолёт (модель и ТТХ)
+  PST=planeStats(PROG.sel);
+  player.hpMax=PST.hp;
+  if(player.meshBuilt!==PST.id){
+    scene.remove(player.mesh);
+    player.mesh=buildPlane({body:0x556b2f, wing:0x8f9e64, accent:0x9a4a1f, star:true, mono:PST.mono});
+    scene.add(player.mesh);
+    player.pos=player.mesh.position; player.quat=player.mesh.quaternion; player.prop=player.mesh.userData.prop;
+    player.meshBuilt=PST.id;
+    player.pos.set(0,300,0);
+  }
+}
+
 const GUNS = [V3(-0.35,0.55,-2.9), V3(0.35,0.55,-2.9)];
 
 // ================= БОТЫ =================
 const bots = [];
 function resetBot(b){
+  const bp=b.pst||planeStatsBot(PLANES.find(p=>p.tier===3)); // до первого setupTiers — ранг III
   if(b.team==='blue'){ // ведомый: появляется в строю рядом с игроком
     _v1.copy(FWD).applyQuaternion(player.quat); _v1.y=0; _v1.normalize();
     _v2.set(_v1.z,0,-_v1.x); // горизонтальный перпендикуляр
     const side=(b.slot||0)-1;
     b.pos.copy(player.pos).addScaledVector(_v1,-rand(55,80)).addScaledVector(_v2,side*rand(45,65));
     b.pos.y=Math.max(player.pos.y+rand(10,35), Math.max(terrainHeight(b.pos.x,b.pos.z),-2)+120);
-    b.hp=35; b.alive=true; b.mesh.visible=true; b.speed=player.speed;
+    b.hp=bp.hp; b.alive=true; b.mesh.visible=true; b.speed=Math.min(player.speed,bp.maxSpd*1.05);
     b.burst=0; b.threatT=0; b.attackT=rand(1,3); b.orbitA=rand(0,Math.PI*2);
     b.mesh.quaternion.copy(player.quat);
     b.vel.set(0,0,0);
@@ -530,7 +706,7 @@ function resetBot(b){
   const a=rand(0,Math.PI*2), r=rand(4000,5200); // спавн красных в 4–5.2 км от игрока
   b.pos.set(player.pos.x+Math.cos(a)*r, 0, player.pos.z+Math.sin(a)*r);
   b.pos.y = Math.max(player.pos.y+rand(-80,350), Math.max(terrainHeight(b.pos.x,b.pos.z),-2)+230);
-  b.hp=30; b.alive=true; b.mesh.visible=true; b.speed=rand(46,56);
+  b.hp=bp.hp; b.alive=true; b.mesh.visible=true; b.speed=rand(bp.maxSpd*0.72,bp.maxSpd*0.85);
   b.burst=0; b.threatT=0; b.attackT=rand(0.5,2.2); b.orbitA=rand(0,Math.PI*2);
   b.mesh.lookAt(player.pos); b.mesh.rotateY(Math.PI);
   b.vel.set(0,0,0);
@@ -560,6 +736,10 @@ for(let i=0;i<4;i++){
   bots.push(b); ALLIES.push(b);
   resetBot(b);
 }
+
+// стартовая расстановка самолётов (фон меню + первый бой) — ранг из ангара
+applyPlayerPlane();
+setupTiers();
 
 // ================= ВВОД =================
 const keys={};
@@ -782,12 +962,13 @@ function spawnBullet(pos,dir,speed,team,shooter){
   for(const x of bullets) if(!x.on){ b=x; break; }
   if(!b){
     if(bullets.length>=170) return;
-    b={mesh:new THREE.Mesh(bulletGeo,matTrP), on:false, vel:V3(), life:0, team:'blue', shooter:null};
+    b={mesh:new THREE.Mesh(bulletGeo,matTrP), on:false, vel:V3(), life:0, team:'blue', shooter:null, dmg:10};
     scene.add(b.mesh); bullets.push(b);
   }
   b.on=true; b.mesh.visible=true;
   b.mesh.material = team==='blue'?matTrP:matTrB;
   b.team=team; b.shooter=shooter||null;
+  b.dmg=(shooter==='player')?PST.dmg:(shooter&&shooter.pst?shooter.pst.dmg:10); // урон — от вооружения стрелка
   b.vel.copy(dir).multiplyScalar(speed);
   b.life=1.35;
   b.mesh.position.copy(pos);
@@ -805,13 +986,13 @@ function updateBullets(dt){
       if(b.team==='blue'){ // синие (игрок и ведомые) бьют только красных
         for(const bot of bots){
           if(!bot.alive||bot.team!=='red') continue;
-          if(p.distanceToSquared(bot.pos)<22){ damageBot(bot, rand(8,13), p, b.shooter); dead=true; break; }
+          if(p.distanceToSquared(bot.pos)<22){ damageBot(bot, b.dmg*rand(0.85,1.2), p, b.shooter); dead=true; break; }
         }
       } else { // красные — по игроку и по ведомым
-        if(player.alive&&p.distanceToSquared(player.pos)<13){ damagePlayer(rand(4,7)); dead=true; }
+        if(player.alive&&p.distanceToSquared(player.pos)<13){ damagePlayer(b.dmg*0.62*rand(0.85,1.2)); dead=true; } // боты бьют по игроку слабее (×0.62) — компенсация за автоматизм ИИ
         if(!dead) for(const al of ALLIES){
           if(!al.alive) continue;
-          if(p.distanceToSquared(al.pos)<22){ damageBot(al, rand(4,8), p, b.shooter); dead=true; break; }
+          if(p.distanceToSquared(al.pos)<22){ damageBot(al, b.dmg*0.62*rand(0.85,1.2), p, b.shooter); dead=true; break; }
         }
       }
     }
@@ -937,13 +1118,17 @@ function killBot(b, killer){
   else blueLives--; // любая смерть синего ведомого — минус жизнь из общего счёта (15)
   if(killer==='player'){
     pKills++; // личный счёт игрока: только сбитые им самим (фраги союзников и краши красных в него не идут)
+    payReward(120,70); // фраг игроком: 120₽ + 70 опыта
     toast(['Цель уничтожена!','Сбит! Отличная работа!','Есть один!','Цель поражена!'][pKills%4]);
   } else if(killer){
     killer.kills++;
+    if(killer.team==='blue'&&b.team==='red') payReward(50,30); // фраг союзника — командная поддержка (в общий кошелёк боя)
     if(killer.team==='blue') toast(killer.name+' сбил: '+b.name);
     else if(b.team==='blue') toast('Ведомый сбит: '+b.name);
     else toast('Вражеский самолёт разбился');
-  } else toast(b.team==='blue'?'Ведомый разбился':'Вражеский самолёт разбился');
+  } else { toast(b.team==='blue'?'Ведомый разбился':'Вражеский самолёт разбился');
+    if(b.team==='red') payReward(40,20); // краш красного — тоже в общий счёт победы и в кошелёк
+  }
   b.lives--;
   if(b.lives>0) respawnQ.push({t:4.5+rand(0,3), b}); // жизни кончились — бот больше не респавнится
 }
@@ -964,7 +1149,7 @@ function killPlayer(){
 function respawnPlayer(){ // возрождение за жизнь: kills и бой сохраняются
   player.pos.set(0,300,0);
   player.quat.set(0,0,0,1);
-  player.speed=55; player.throttle=0.65; player.hp=100; player.alive=true;
+  player.speed=Math.round(PST.maxSpd*0.65); player.throttle=0.65; player.hp=PST.hp; player.alive=true;
   player.ammo=4; player.ammoT=0; player.cdM=0; player.cd=0; player.lastHit=99; player.smokeT=0;
   player.g=1; player.glocT=0; player.gPk=1; player.trailT=0;
   player.mesh.visible=true;
@@ -1021,9 +1206,10 @@ function steerToward(b, target, dt){
   const bank=Math.asin(clamp(-upW.x,-1,1));
   const want=clamp(-yawErr*1.35,-1.05,1.05);
   const roll=clamp((want-bank)*2.4,-1,1);
-  b.quat.multiply(_q1.setFromAxisAngle(AX, clamp(pitchErr,-1,1)*1.5*dt));
-  b.quat.multiply(_q1.setFromAxisAngle(AY, clamp(yawErr,-1,1)*0.85*dt));
-  b.quat.multiply(_q1.setFromAxisAngle(AZ, -roll*2.4*dt));
+  const bt=(b.pst?b.pst.turn:1); // манёвренность своего самолёта
+  b.quat.multiply(_q1.setFromAxisAngle(AX, clamp(pitchErr,-1,1)*1.5*bt*dt));
+  b.quat.multiply(_q1.setFromAxisAngle(AY, clamp(yawErr,-1,1)*0.85*bt*dt));
+  b.quat.multiply(_q1.setFromAxisAngle(AZ, -roll*2.4*bt*dt));
   b.quat.normalize();
 }
 function botFront(b, T){
@@ -1098,7 +1284,7 @@ function updateBots(dt){
     // боты не забираются выше зоны досягаемости (~500 м над игроком) — иначе их не догнать
     if(b.pos.y>player.pos.y+500) target.y=Math.min(target.y,b.pos.y-400);
     steerToward(b, target, dt);
-    const tSpd = engage?(b.team==='red'?78:74):(b.team==='blue'?clamp(player.speed+8+b.pos.distanceTo(target)*0.1,49,95):62); // красные быстрее (78/62) — враги усилены
+    const tSpd = engage?(b.team==='red'?b.pst.maxSpd*0.95:b.pst.maxSpd*0.9):(b.team==='blue'?clamp(player.speed+8+b.pos.distanceTo(target)*0.1,b.pst.maxSpd*0.6,b.pst.maxSpd*1.15):b.pst.maxSpd*0.75); // скорости — от ТТХ своего самолёта (красный в бою ~95% максимума)
     b.speed += (tSpd-b.speed)*(1-Math.exp(-dt*0.5));
     _v5.copy(FWD).applyQuaternion(b.quat);
     b.pos.addScaledVector(_v5, b.speed*dt);
@@ -1149,9 +1335,9 @@ function updatePlayer(dt){
   player.ctrl.r+=((gloc?0:tR)-player.ctrl.r)*sm;
   player.ctrl.y+=((gloc?0:tY)-player.ctrl.y)*sm;
   // фактические угловые скорости (лимит 1.5 рад/с — мгновенных разворотов нет)
-  const wP=clamp(player.ctrl.p*1.35*auth,-1.5,1.5);
-  const wR=clamp(player.ctrl.r*2.5*auth,-1.5,1.5);
-  const wY=clamp(player.ctrl.y*0.78*auth,-1.5,1.5);
+  const wP=clamp(player.ctrl.p*1.35*PST.turn*auth,-1.5,1.5);
+  const wR=clamp(player.ctrl.r*2.5*PST.turn*auth,-1.5,1.5);
+  const wY=clamp(player.ctrl.y*0.78*PST.turn*auth,-1.5,1.5);
   // ===== ПЕРЕГРУЗКА: G = 1 + |V·ω(тангаж)| / 16.0 =====
   const gT=1+Math.abs(player.speed*wP)/16.0; // модуль — без отрицательной перегрузки; /16 — G растёт чуть медленнее
   player.g+=(gT-player.g)*(1-Math.exp(-dt*3.5)); // медленнее набирается — краткий рывок не «в темноту»
@@ -1194,15 +1380,15 @@ function updatePlayer(dt){
   const ct=keys.ControlLeft||keys.ControlRight||keys.KeyX;
   if(sh) player.throttle=Math.min(1,player.throttle+0.5*dt);
   if(ct) player.throttle=Math.max(0,player.throttle-0.5*dt);
-  const tSpd=MIN_SPEED+player.throttle*(MAX_SPEED-MIN_SPEED);
+  const tSpd=PST.minSpd+player.throttle*(PST.maxSpd-PST.minSpd); // скорость — от ТТХ своего самолёта
   player.speed+=(tSpd-player.speed)*(1-Math.exp(-dt*0.55));
   _v1.copy(FWD).applyQuaternion(player.quat);
-  player.speed-=_v1.y*22*dt; // набор высоты сильнее замедляет, пикирование сильнее разгоняет (усилено)
-  player.speed=clamp(player.speed,6,105);
+  player.speed-=_v1.y*PST.climb*dt; // набор высоты замедляет по ТТХ (слабый двигатель — сильнее), пикирование разгоняет
+  player.speed=clamp(player.speed,6,PST.maxSpd*1.28);
   player.vel.copy(_v1).multiplyScalar(player.speed);
   player.pos.addScaledVector(_v1,player.speed*dt);
   // сваливание при малой скорости
-  const stall=clamp((STALL-player.speed)/STALL,0,1);
+  const stall=clamp((PST.minSpd+1-player.speed)/(PST.minSpd+1),0,1);
   if(stall>0){
     player.mesh.rotateX(-stall*0.5*dt);
     player.pos.y-=stall*24*dt;
@@ -1210,7 +1396,7 @@ function updatePlayer(dt){
   // потолок
   if(player.pos.y>8000){
     player.pos.y=8000;
-    player.speed=Math.min(player.speed,MIN_SPEED+6);
+    player.speed=Math.min(player.speed,PST.minSpd+6);
   }
   // столкновение с землёй
   const gh=Math.max(terrainHeight(player.pos.x,player.pos.z),-2);
@@ -1251,7 +1437,7 @@ function updateMenuPilot(dt){
   if(!player.alive) return;
   player.throttle=0.7;
   _v1.copy(FWD).applyQuaternion(player.quat);
-  player.speed+=(0.6*MAX_SPEED-player.speed)*(1-Math.exp(-dt*0.5));
+  player.speed+=(0.6*PST.maxSpd-player.speed)*(1-Math.exp(-dt*0.5));
   player.speed-=_v1.y*13*dt;
   player.speed=clamp(player.speed,10,105);
   player.pos.addScaledVector(_v1,player.speed*dt);
@@ -1463,9 +1649,9 @@ function updateHUD(dt){
   elT.style.width=Math.round(player.throttle*100)+'%';
   elTp.textContent=Math.round(player.throttle*100)+'%';
   const hp=Math.max(0,player.hp);
-  elH.style.width=hp+'%';
+  elH.style.width=(hp/player.hpMax*100)+'%';
   elH.style.background=hp>55?'#7ec850':hp>25?'#e0a030':'#e05038';
-  elHn.textContent=Math.ceil(hp)+' / 100';
+  elHn.textContent=Math.ceil(hp)+' / '+player.hpMax;
   const pips=elM.children;
   for(let i=0;i<4;i++) pips[i].classList.toggle('on', i<player.ammo);
   elK.textContent=pKills; // личный счёт — фраги союзников и краши красных в него не идут
@@ -1474,7 +1660,7 @@ function updateHUD(dt){
   // предупреждения
   let w='';
   if(state==='play'&&player.alive){
-    if(player.speed<STALL+4) w+='СВАЛИВАНИЕ — увеличьте тягу (Shift)<br>';
+    if(player.speed<PST.minSpd+5) w+='СВАЛИВАНИЕ — увеличьте тягу (Shift)<br>';
     const agl=player.pos.y-Math.max(terrainHeight(player.pos.x,player.pos.z),-2);
     if(agl<70) w+='ОПАСНО: РЕЛЬЕФ!<br>';
   }
@@ -1543,12 +1729,18 @@ function updateHUD(dt){
     const b=sortedT[i], d=b.pos.distanceTo(player.pos);
     row.style.display='flex';
     row.classList.toggle('lock', b===lockTarget);
+    row.children[1].textContent=b.pst?b.pst.name:'Биплан'; // тип цели — самолёт её ранга
     row.lastElementChild.textContent=d<1000?Math.round(d)+' м':(d/1000).toFixed(1)+' км';
   }
 }
 
 // ================= УПРАВЛЕНИЕ ИГРОЙ =================
 function startGame(){
+  applyPlayerPlane(); setupTiers(); battlePay={money:0,xp:0}; // новый бой: самолёт из ангара, свежий состав рангов
+  player.pos.set(0,300,0);
+  player.quat.set(0,0,0,1);
+  player.speed=Math.round(PST.maxSpd*0.65); player.throttle=0.65; player.hp=PST.hp; player.alive=true;
+  for(const b of bots){ b.lives=3; resetBot(b); } // после setupTiers модели новые — расставить ботов заново (иначе они в (0,0,0) и крашатся)
   state='play';
   $('ov-start').classList.add('hidden');
   $('hud').classList.add('on');
@@ -1559,9 +1751,10 @@ function startGame(){
   tryLock();
 }
 function restart(){
+  applyPlayerPlane(); setupTiers(); battlePay={money:0,xp:0}; // новый вылет: свежий состав рангов и кошелёк боя
   player.pos.set(0,300,0);
   player.quat.set(0,0,0,1);
-  player.speed=55; player.throttle=0.65; player.hp=100; player.alive=true;
+  player.speed=Math.round(PST.maxSpd*0.65); player.throttle=0.65; player.hp=PST.hp; player.alive=true;
   player.ammo=4; player.ammoT=0; player.cdM=0; player.cd=0; player.lastHit=99; player.smokeT=0;
   player.g=1; player.glocT=0; player.trailT=0;
   player.mesh.visible=true;
@@ -1573,6 +1766,7 @@ function restart(){
   for(const b of bots){ b.lives=3; resetBot(b); }
   playerLives=3; blueLives=15;
   kills=0; pKills=0; camShake=0; dmgA=0; respawnQ.length=0; warnFlags={};
+  battlePay={money:0,xp:0}; // новый бой — новый кошелёк
   lockTarget=null; deadShown=false; lastKiller=null;
   mAccX=0; mAccY=0; mFltX=0; mFltY=0; lastMX=null; lastMY=null;
   camQ.copy(player.quat); camInit=false;
@@ -1594,6 +1788,7 @@ function togglePause(){
 }
 function returnToMenu(){
   state='menu';
+  updateMenuWallet(); // после боя деньги/опыт изменились — обновить строку в меню
   $('ov-pause').classList.add('hidden');
   $('ov-death').classList.add('hidden');
   $('ov-victory').classList.add('hidden');
@@ -1605,7 +1800,7 @@ function returnToMenu(){
   player.quat.set(0,0,0,1);
   camQ.copy(player.quat); camInit=false;
   // тихий сброс боя: без него «ВЗЛЕТЕТЬ» продолжил бы прошлый вылет (hp/фраги/боты/снаряды)
-  player.alive=true; player.hp=100; player.speed=55; player.throttle=0.65;
+  player.alive=true; player.hp=PST.hp; player.speed=Math.round(PST.maxSpd*0.65); player.throttle=0.65;
   player.g=1; player.glocT=0; player.gPk=1; player.lastHit=99; player.smokeT=0; player.trailT=0;
   player.mesh.visible=true;
   for(const b of bullets){ b.on=false; b.mesh.visible=false; }
@@ -1616,6 +1811,7 @@ function returnToMenu(){
   for(const b of bots){ b.lives=3; resetBot(b); }
   playerLives=3; blueLives=15;
   kills=0; pKills=0; camShake=0; dmgA=0; respawnQ.length=0; warnFlags={};
+  battlePay={money:0,xp:0}; // новый бой — новый кошелёк
   lockTarget=null; deadShown=false; lastKiller=null;
   mAccX=0; mAccY=0; mFltX=0; mFltY=0; lastMX=null; lastMY=null;
   mouseDown=false; zoomHeld=false;
@@ -1623,6 +1819,8 @@ function returnToMenu(){
 function showVictory(){
   state='win';
   $('victory-kills').textContent=kills;
+  const r=applyRewards(true); // бой окончен — выдаём заработанное
+  $('victory-pay').textContent='Заработано: '+r.money.toLocaleString('ru-RU')+' ₽ · +'+r.xp+' опыта';
   $('ov-victory').classList.remove('hidden');
   $('hud').classList.remove('on');
   if(document.pointerLockElement) document.exitPointerLock();
@@ -1630,10 +1828,87 @@ function showVictory(){
 function showDeath(){
   $('death-title').textContent='ВЫ ПРОИГРАЛИ'; // оверлей показывается только когда жизни кончились
   $('death-kills').textContent=kills;
+  const r=applyRewards(false); // поражение — только за участие и фраги
+  $('death-pay').textContent='Заработано: '+r.money.toLocaleString('ru-RU')+' ₽ · +'+r.xp+' опыта';
   $('death-by').textContent=lastKiller?('Вас сбил: '+lastKiller):'Самолёт разбился';
   $('ov-death').classList.remove('hidden');
   $('hud').classList.remove('on');
 }
+// ================= АНГАР =================
+function fmtMoney(n){ return n.toLocaleString('ru-RU')+' ₽'; }
+function updateMenuWallet(){
+  $('menu-wallet').textContent='В ангаре: '+PLANES.find(p=>p.id===PROG.sel).name+' · '+fmtMoney(PROG.money)+' · '+PROG.xp+' опыта';
+}
+function updateWallet(){
+  $('w-money').textContent=fmtMoney(PROG.money);
+  $('w-xp').textContent=PROG.xp+' опыта';
+  updateMenuWallet();
+}
+function renderHangar(){
+  updateWallet();
+  let html='';
+  for(let t=1;t<=5;t++){
+    html+='<div class="tier-h">РАНГ '+TIER_ROMAN[t-1]+'</div>';
+    for(const p of PLANES.filter(x=>x.tier===t)){
+      const owned=PROG.owned.includes(p.id), sel=PROG.sel===p.id;
+      let btn;
+      if(sel) btn='<button class="pc-btn" disabled>ВЫБРАН ✓</button>';
+      else if(owned) btn='<button class="pc-btn owned" data-act="sel" data-id="'+p.id+'">ВЫБРАТЬ</button>';
+      else btn='<button class="pc-btn" data-act="buy" data-id="'+p.id+'" '+(PROG.money<p.cost?'disabled':'')+'>КУПИТЬ · '+fmtMoney(p.cost)+'</button>';
+      html+='<div class="plane-card'+(sel?' sel':'')+'">'
+        +'<div class="tier-badge">'+TIER_ROMAN[t-1]+'</div>'
+        +'<div class="pc-main"><div class="pc-name">'+p.name+'</div>'
+        +'<div class="pc-spec">'+Math.round(p.maxSpd*3.6)+' км/ч · '+p.hp+' HP · '+p.guns+' · урон '+p.dmg+'</div></div>'
+        +btn+'</div>';
+    }
+  }
+  $('hangar-list').innerHTML=html;
+  // блок улучшений выбранного самолёта
+  const p=PLANES.find(x=>x.id===PROG.sel), u=PROG.upg[p.id];
+  let uh='<div class="upg-title">УЛУЧШЕНИЯ — '+p.name.toUpperCase()+' (опыт общий, '+PROG.xp+' доступно)</div>';
+  for(const br of UPG_BRANCHES){
+    const lvl=u[br.id], max=lvl>=5, cost=max?0:UPG_COST[lvl];
+    let pips=''; for(let i=0;i<5;i++) pips+='<div class="pip'+(i<lvl?' on':'')+'"></div>';
+    uh+='<div class="upg-row"><div class="upg-name">'+br.name+'<small>'+br.hint+'</small></div>'
+      +'<div class="pips">'+pips+'</div>'
+      +'<div class="upg-cost">'+(max?'МАКСИМУМ':cost+' опыта')+'</div>'
+      +'<button class="upg-btn" data-act="upg" data-br="'+br.id+'" '+((max||PROG.xp<cost)?'disabled':'')+'>УЛУЧШИТЬ</button></div>';
+  }
+  $('upg-box').innerHTML=uh;
+}
+$('hangar-list').addEventListener('click', e=>{
+  const btn=e.target.closest('button[data-act]'); if(!btn) return;
+  const id=btn.dataset.id, p=PLANES.find(x=>x.id===id);
+  if(btn.dataset.act==='buy'&&p&&PROG.money>=p.cost){
+    PROG.money-=p.cost; PROG.owned.push(id); PROG.sel=id; saveProg();
+    toast(p.name+' — куплен и выбран!');
+    renderHangar();
+  } else if(btn.dataset.act==='sel'&&p){
+    PROG.sel=id; saveProg();
+    renderHangar();
+  }
+});
+$('upg-box').addEventListener('click', e=>{
+  const btn=e.target.closest('button[data-act="upg"]'); if(!btn) return;
+  const br=btn.dataset.br, u=PROG.upg[PROG.sel], lvl=u[br];
+  if(lvl>=5||PROG.xp<UPG_COST[lvl]) return;
+  PROG.xp-=UPG_COST[lvl]; u[br]=lvl+1; saveProg();
+  toast(UPG_BRANCHES.find(b=>b.id===br).name+': уровень '+(lvl+1));
+  renderHangar();
+});
+$('btn-hangar').addEventListener('click', ()=>{ renderHangar(); $('ov-hangar').classList.remove('hidden'); });
+$('btn-hangar-close').addEventListener('click', ()=>{ $('ov-hangar').classList.add('hidden'); updateMenuWallet(); });
+$('btn-prog-reset').addEventListener('click', ()=>{
+  if(!confirm('Сбросить весь прогресс: деньги, опыт, самолёты и улучшения?')) return;
+  try{ localStorage.removeItem(PROG_KEY); }catch(e){}
+  PROG={money:1000, xp:0, owned:['po2'], sel:'po2', upg:{}};
+  loadProg(); saveProg();
+  applyPlayerPlane(); setupTiers();
+  renderHangar();
+  toast('Прогресс сброшен');
+});
+updateMenuWallet();
+
 $('btn-start').addEventListener('click', startGame);
 $('btn-again').addEventListener('click', restart);
 $('btn-victory').addEventListener('click', ()=>{ $('ov-victory').classList.add('hidden'); restart(); });
@@ -1684,6 +1959,16 @@ function animate(){
   renderer.render(scene,camera);
 }
 animate();
+
+
+
+
+
+
+
+
+
+
 
 
 
