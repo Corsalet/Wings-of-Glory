@@ -23,7 +23,7 @@
   #thr-fill{background:linear-gradient(90deg,#c96a2a,#ffcf8f)}
   #hp-fill{background:#7ec850}
   .hud-small{font-size:11px;color:var(--amber-dim);margin-top:3px;font-family:monospace}
-  #missiles{display:none;gap:4px;justify-content:flex-end;margin-top:6px} /* ракеты убраны из игры */
+  #missiles{display:flex;gap:4px;justify-content:flex-end;margin-top:6px} /* ракеты — реактивные ранги VI–X */
   #missiles i{width:9px;height:16px;border:1px solid var(--amber-dim);border-radius:2px}
   #missiles i.on{background:#ffcf8f;box-shadow:0 0 6px rgba(255,180,90,.6)}
   #v-kills{color:#ffd27a}
@@ -120,7 +120,7 @@
   .tier-h{margin:14px 0 6px;font-size:11px;letter-spacing:3px;color:var(--amber-dim);font-weight:800;border-bottom:1px solid rgba(255,180,110,.18);padding-bottom:4px}
   .plane-card{display:flex;align-items:center;gap:12px;padding:8px 10px;border:1px solid rgba(255,180,110,.14);border-radius:7px;margin-bottom:6px;background:rgba(0,0,0,.18)}
   .plane-card.sel{border-color:#d98a4a;background:rgba(217,138,74,.09);box-shadow:0 0 14px rgba(217,138,74,.18)}
-  .tier-badge{flex:none;width:30px;height:30px;border-radius:50%;border:1.5px solid #d98a4a;color:#ffd9a0;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;font-family:monospace}
+  .tier-badge{flex:none;min-width:30px;height:30px;padding:0 7px;border-radius:15px;border:1.5px solid #d98a4a;color:#ffd9a0;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;font-family:monospace}
   .pc-main{flex:1;min-width:0}
   .pc-name{font-size:14.5px;font-weight:800;color:#ffe2b8;letter-spacing:.5px}
   .pc-spec{font-family:monospace;font-size:10.5px;color:var(--amber-dim);margin-top:2px}
@@ -192,7 +192,7 @@
   </div>
   <div id="hud-right">
     <div><div class="hud-label">ПРОЧНОСТЬ</div><div class="bar"><div id="hp-fill"></div></div><div class="hud-small" id="v-hp">100 / 100</div></div>
-    <div style="display:none"><div class="hud-label">РАКЕТЫ</div><div id="missiles"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div></div>
+    <div id="msl-card" style="display:none"><div class="hud-label">РАКЕТЫ</div><div id="missiles"></div></div>
     <div><div class="hud-label">ЖИЗНИ</div><div class="hud-value" id="v-lives">3</div></div>
     <div><div class="hud-label">СБИТО</div><div class="hud-value" id="v-kills">0</div></div>
     <div id="tgt-list">
@@ -291,7 +291,7 @@
 <div id="ov-hangar" class="overlay hidden">
   <div class="panel hangar-panel">
     <div class="title" style="font-size:26px">АНГАР</div>
-    <div class="subtitle">советская ветка · ранги I–V</div>
+    <div class="subtitle">советская ветка · ранги I–X · от По-2 до Су-35</div>
     <div class="wallet"><span id="w-money">0 ₽</span><span class="sep">·</span><span id="w-xp">0 опыта</span></div>
     <div id="hangar-list"></div>
     <div id="upg-box" class="upg-box"></div>
@@ -325,7 +325,7 @@ const BOT_NAMES=['Барон','Факел','Гриф','Ворон','Шторм']
 const ALLY_NAMES=['Сокол','Стрела','Клим','Тайфун'];
 const ALLY_SLOTS=[[-46,10,58],[46,10,58],[-28,42,100],[28,42,100]]; // [вправо, вверх, назад] от игрока
 
-// ================= САМОЛЁТЫ: СОВЕТСКАЯ ВЕТКА (ранги I–V) =================
+// ================= САМОЛЁТЫ: СОВЕТСКАЯ ВЕТКА (ранги I–X: винтовые I–V, реактивные VI–X) =================
 // Баланс: ТТХ calibrated вокруг прежнего баланса игры (hp 100, 82 м/с, поворот 1.0, урон ~12) = ранг III
 const PLANES=[
  {id:'po2',  name:'По-2',        tier:1, cost:0,     hp:70,  maxSpd:46, minSpd:20, turn:1.30, climb:30, guns:'1 × 7.62 мм ШКАС',        dmg:6,  mono:false, desc:'Учебный биплан. Медленный, но очень послушный.'},
@@ -337,9 +337,15 @@ const PLANES=[
  {id:'la5',  name:'Ла-5',        tier:4, cost:13000, hp:115, maxSpd:79, minSpd:27, turn:1.05, climb:19, guns:'2 × 20 мм ШВАК',          dmg:14, mono:true,  desc:'Мощный и живучий. Звезда Сталинграда.'},
  {id:'yak9', name:'Як-9',        tier:4, cost:15000, hp:110, maxSpd:81, minSpd:27, turn:1.08, climb:19, guns:'1 × 20 мм + 2 × 12.7 мм', dmg:13, mono:true,  desc:'Универсал: пушечный кулак и высокая скорость.'},
  {id:'yak3', name:'Як-3',        tier:5, cost:24000, hp:105, maxSpd:83, minSpd:26, turn:1.15, climb:17, guns:'1 × 20 мм + 2 × 12.7 мм', dmg:13, mono:true,  desc:'Легчайший истребитель войны. Гроза «мессеров» на малых.'},
- {id:'la7',  name:'Ла-7',        tier:5, cost:30000, hp:120, maxSpd:86, minSpd:28, turn:1.10, climb:17, guns:'2 × 20 мм ШВАК',          dmg:15, mono:true,  desc:'Вершина ветки. На нём закончил войну Кожедуб.'}
+ {id:'la7',  name:'Ла-7',        tier:5, cost:30000, hp:120, maxSpd:86, minSpd:28, turn:1.10, climb:17, guns:'2 × 20 мм ШВАК',          dmg:15, mono:true,  desc:'Вершина винтовой ветки. На нём закончил войну Кожедуб.'},
+ // ===== реактивная эра: ранги VI–X (msl — боекомплект ракет, kph — реальная скорость для карточки) =====
+ {id:'mig9',  name:'МиГ-9',       tier:6,  cost:45000,  hp:110, maxSpd:90,  minSpd:30, turn:1.02, climb:16, guns:'1 × 37 мм Н-37 + 2 × 23 мм НС-23', dmg:12, mono:true, jet:true, msl:0, kph:910,  desc:'Первый реактивный истребитель СССР. Реверс эпохи.'},
+ {id:'mig15', name:'МиГ-15бис',   tier:7,  cost:62000,  hp:115, maxSpd:96,  minSpd:32, turn:1.00, climb:15, guns:'1 × 37 мм Н-37 + 2 × 23 мм НР-23', dmg:14, mono:true, jet:true, msl:0, kph:1076, desc:'Гроза «Сейбров» в небе Кореи. Легенда реактивного начала.'},
+ {id:'mig21', name:'МиГ-21бис',   tier:8,  cost:85000,  hp:110, maxSpd:104, minSpd:34, turn:0.96, climb:13, guns:'1 × 23 мм ГШ-23Л + 2 × Р-3С',      dmg:15, mono:true, jet:true, msl:2, kph:2230, desc:'Сверхзвуковой долгожитель. Первые ракеты в ветке.'},
+ {id:'mig29', name:'МиГ-29',      tier:9,  cost:115000, hp:125, maxSpd:112, minSpd:36, turn:0.98, climb:12, guns:'1 × 30 мм ГШ-301 + Р-27/Р-60',     dmg:17, mono:true, jet:true, msl:4, kph:2450, desc:'Фронтовой истребитель 4-го поколения. Кобра и «воронка».'},
+ {id:'su35',  name:'Су-35С',      tier:10, cost:150000, hp:140, maxSpd:118, minSpd:36, turn:1.02, climb:11, guns:'1 × 30 мм ГШ-301 + Р-73/Р-77',     dmg:18, mono:true, jet:true, msl:6, kph:2520, desc:'Сверхманёвренный 4++. Вершина советской школы.'}
 ];
-const TIER_ROMAN=['I','II','III','IV','V'];
+const TIER_ROMAN=['I','II','III','IV','V','VI','VII','VIII','IX','X'];
 // улучшения самолёта за опыт: 4 ветки × 5 уровней
 const UPG_BRANCHES=[
  {id:'eng', name:'ДВИГАТЕЛЬ',  hint:'+4% макс. скорости'},
@@ -364,7 +370,7 @@ loadProg();
 function planeStats(id){ // ТТХ самолёта + улучшения (игрок)
   const p=PLANES.find(x=>x.id===id)||PLANES[0];
   const u=PROG.upg[p.id]||{eng:0,dur:0,hdl:0,gun:0};
-  return { id:p.id, name:p.name, tier:p.tier, mono:p.mono,
+  return { id:p.id, name:p.name, tier:p.tier, mono:p.mono, jet:p.jet||false, msl:p.msl||0,
     maxSpd:p.maxSpd*(1+u.eng*0.04),
     minSpd:p.minSpd,
     hp:p.hp+u.dur*8,
@@ -373,7 +379,7 @@ function planeStats(id){ // ТТХ самолёта + улучшения (игр
     dmg:p.dmg*(1+u.gun*0.08) };
 }
 function planeStatsBot(pl){ // боты без улучшений; hp бота — 35% от полного ТТХ (ИИ должен оставаться сбиваемым, как раньше 30-35 против 100)
-  return { id:pl.id, name:pl.name, tier:pl.tier, mono:pl.mono,
+  return { id:pl.id, name:pl.name, tier:pl.tier, mono:pl.mono, jet:pl.jet||false,
     maxSpd:pl.maxSpd, minSpd:pl.minSpd, turn:pl.turn, climb:pl.climb, dmg:pl.dmg,
     hp:Math.round(pl.hp*0.35) };
 }
@@ -389,7 +395,7 @@ function applyRewards(victory){
 
 // ================= МАТЧМЕЙКИНГ РАНГОВ =================
 // Пул рангов ботов относительно ранга игрока: никогда не слабее игрока (кроме топов), у топов чуть ниже.
-const MM_POOL={1:[[1,.5],[2,.3],[3,.2]], 2:[[2,.45],[3,.35],[4,.2]], 3:[[3,.4],[4,.35],[5,.25]], 4:[[3,.25],[4,.4],[5,.35]], 5:[[4,.45],[5,.55]]};
+const MM_POOL={1:[[1,.5],[2,.3],[3,.2]], 2:[[2,.45],[3,.35],[4,.2]], 3:[[3,.4],[4,.35],[5,.25]], 4:[[3,.25],[4,.4],[5,.35]], 5:[[4,.45],[5,.55]], 6:[[5,.35],[6,.45],[7,.2]], 7:[[6,.3],[7,.45],[8,.25]], 8:[[7,.3],[8,.4],[9,.3]], 9:[[8,.25],[9,.4],[10,.35]], 10:[[9,.45],[10,.55]]};
 function rollBotTier(T){
   let r=Math.random();
   for(const [t,w] of MM_POOL[T]){ r-=w; if(r<=0) return t; }
@@ -409,8 +415,8 @@ function assignBotPlane(b, tier){ // назначить самолёт по ра
   if(b.planeBuilt!==pl.id){
     scene.remove(b.mesh);
     const pal = b.team==='blue'
-      ? {body:0x4a5d3a, wing:0x76854e, accent:0x9a4a1f, star:true, mono:pl.mono}
-      : {body:0xb02a20, wing:0xc94b3c, accent:0x801812, cross:true, mono:pl.mono};
+      ? {body:0x4a5d3a, wing:0x76854e, accent:0x9a4a1f, star:true, mono:pl.mono, jet:pl.jet}
+      : {body:0xb02a20, wing:0xc94b3c, accent:0x801812, cross:true, mono:pl.mono, jet:pl.jet};
     b.mesh=buildPlane(pal); scene.add(b.mesh);
     b.pos=b.mesh.position; b.quat=b.mesh.quaternion; b.prop=b.mesh.userData.prop;
     b.planeBuilt=pl.id;
@@ -567,6 +573,33 @@ function buildPlane(p){
     if(rx) m.rotation.x=rx; if(ry) m.rotation.y=ry; if(rz) m.rotation.z=rz;
     g.add(m); return m;
   };
+  let prop;
+  if(p.jet){
+    // ===== РЕАКТИВНЫЕ (ранги VI–X): острый нос, стреловидные крылья, сопло с турбиной =====
+    add(new THREE.BoxGeometry(0.85,0.9,4.2), mBody, 0,0.05,-0.5);
+    add(new THREE.BoxGeometry(0.6,0.62,2.2), mBody, 0,0.12,1.7, 0.05);
+    add(new THREE.ConeGeometry(0.42,1.8,10), mBody, 0,0.05,-3.35, -Math.PI/2); // нос-игла
+    // стреловидное крыло — две консоли назад
+    for(const s of [-1,1]){
+      add(new THREE.BoxGeometry(4.5,0.13,1.8), mWing, s*2.45,0.32,-0.55, 0, -s*0.46, 0);
+      add(new THREE.BoxGeometry(1.6,0.06,0.34), mAcc, s*3.35,0.32,0.15, 0, -s*0.46, 0); // элерон
+    }
+    // стреловидный стабилизатор + высокий киль
+    for(const s of [-1,1]) add(new THREE.BoxGeometry(1.9,0.08,0.95), mWing, s*1.5,0.32,3.05, 0, -s*0.5, 0);
+    add(new THREE.BoxGeometry(0.09,1.6,1.25), mAcc, 0,0.9,3.2);
+    // фонарь кабины (закрытый)
+    add(new THREE.BoxGeometry(0.6,0.36,1.4), mDark, 0,0.48,0.15);
+    add(new THREE.BoxGeometry(0.44,0.3,1.0), new THREE.MeshPhongMaterial({color:0xa8c8dc,transparent:true,opacity:0.5,side:THREE.DoubleSide}), 0,0.68,0.1, -0.12);
+    // сопло + турбина: вращается тем же кодом, что и винт поршневых
+    add(new THREE.CylinderGeometry(0.46,0.36,0.7,10), mDark, 0,0.05,2.95, Math.PI/2);
+    prop = new THREE.Group(); prop.position.set(0,0.05,3.3);
+    const fan = new THREE.Mesh(new THREE.ConeGeometry(0.2,0.42,8), mDark);
+    fan.rotation.x = Math.PI/2; prop.add(fan);
+    const glow = new THREE.Mesh(new THREE.CircleGeometry(0.3,16),
+      new THREE.MeshBasicMaterial({color:0xff9440, transparent:true, opacity:0.5, side:THREE.DoubleSide, depthWrite:false}));
+    glow.position.z = 0.1; prop.add(glow);
+    g.add(prop);
+  } else {
   // фюзеляж
   add(new THREE.BoxGeometry(1.0,1.05,4.4), mBody, 0,0.05,-0.9);
   add(new THREE.BoxGeometry(0.62,0.6,2.7), mBody, 0,0.28,2.15, -0.05);
@@ -593,7 +626,7 @@ function buildPlane(p){
   add(new THREE.SphereGeometry(0.17,8,8), new THREE.MeshPhongMaterial({color:0xd8a077,flatShading:true}), 0,0.66,0.45);
   add(new THREE.BoxGeometry(0.42,0.16,0.3), mBody, 0,0.52,0.45);
   // винт
-  const prop = new THREE.Group();
+  prop = new THREE.Group();
   prop.position.set(0,0.05,-3.85);
   const spinner = new THREE.Mesh(new THREE.ConeGeometry(0.2,0.55,8), mDark);
   spinner.rotation.x = -Math.PI/2; prop.add(spinner);
@@ -603,6 +636,7 @@ function buildPlane(p){
     new THREE.MeshBasicMaterial({color:0x6a5138, transparent:true, opacity:0.14, side:THREE.DoubleSide, depthWrite:false}));
   prop.add(disc);
   g.add(prop);
+  }
   // шасси
   for(const s of [-1,1]){
     add(new THREE.BoxGeometry(0.09,1.0,0.13), mDark, s*0.55,-0.7,-1.85, 0,0,s*-0.4);
@@ -677,12 +711,14 @@ function applyPlayerPlane(){ // применить выбранный в анг�
   player.hpMax=PST.hp;
   if(player.meshBuilt!==PST.id){
     scene.remove(player.mesh);
-    player.mesh=buildPlane({body:0x556b2f, wing:0x8f9e64, accent:0x9a4a1f, star:true, mono:PST.mono});
+    player.mesh=buildPlane({body:0x556b2f, wing:0x8f9e64, accent:0x9a4a1f, star:true, mono:PST.mono, jet:PST.jet});
     scene.add(player.mesh);
     player.pos=player.mesh.position; player.quat=player.mesh.quaternion; player.prop=player.mesh.userData.prop;
     player.meshBuilt=PST.id;
     player.pos.set(0,300,0);
   }
+  player.ammo=PST.msl; player.ammoT=0; player.cdM=0; // боекомплект ракет — от ТТХ самолёта (поршневые: 0)
+  $('missiles').innerHTML='<i></i>'.repeat(PST.msl||0);
 }
 
 const GUNS = [V3(-0.35,0.55,-2.9), V3(0.35,0.55,-2.9)];
@@ -760,6 +796,7 @@ window.addEventListener('keydown', e=>{
   if(e.repeat) return;
   if(e.code==='KeyB'){ camFP=!camFP; toast(camFP?'Вид из кабины':'Вид сзади'); }
   else if(e.code==='KeyM') AudioSys.toggleMute();
+  else if(e.code==='Space' && state==='play') fireMissile(); // реактивные ранги: пуск ракеты
   else if(e.code==='KeyR' && (state==='play'||state==='dead')) restart();
   else if(e.code==='Escape'||e.code==='KeyP') togglePause();
   else if(e.code==='Enter' && state==='menu') startGame();
@@ -1023,6 +1060,7 @@ function computeLock(){
 }
 function fireMissile(){
   if(!player.alive) return;
+  if(!PST.msl){ toast('На этом самолёте нет ракет'); return; }
   if(player.ammo<=0){ toast('Ракеты перезаряжаются…'); return; }
   if(player.cdM>0) return;
   player.ammo--; player.cdM=1.2;
@@ -1150,7 +1188,7 @@ function respawnPlayer(){ // возрождение за жизнь: kills и б
   player.pos.set(0,300,0);
   player.quat.set(0,0,0,1);
   player.speed=Math.round(PST.maxSpd*0.65); player.throttle=0.65; player.hp=PST.hp; player.alive=true;
-  player.ammo=4; player.ammoT=0; player.cdM=0; player.cd=0; player.lastHit=99; player.smokeT=0;
+  player.ammo=PST.msl; player.ammoT=0; player.cdM=0; player.cd=0; player.lastHit=99; player.smokeT=0;
   player.g=1; player.glocT=0; player.gPk=1; player.trailT=0;
   player.mesh.visible=true;
   mAccX=0; mAccY=0; mFltX=0; mFltY=0; lastMX=null; lastMY=null;
@@ -1404,9 +1442,9 @@ function updatePlayer(dt){
   player.lastHit+=dt; // учёт времени с последнего урона (регенерация убрана)
   // перезарядка ракет
   player.cdM=Math.max(0,player.cdM-dt);
-  if(player.ammo<4){
+  if(PST.msl>0&&player.ammo<PST.msl){
     player.ammoT+=dt;
-    if(player.ammoT>6){ player.ammoT=0; player.ammo++; toast('Ракета заряжена'); }
+    if(player.ammoT>8){ player.ammoT=0; player.ammo++; toast('Ракета заряжена'); }
   }
   // дым при сильных повреждениях
   if(player.hp<35){
@@ -1653,7 +1691,8 @@ function updateHUD(dt){
   elH.style.background=hp>55?'#7ec850':hp>25?'#e0a030':'#e05038';
   elHn.textContent=Math.ceil(hp)+' / '+player.hpMax;
   const pips=elM.children;
-  for(let i=0;i<4;i++) pips[i].classList.toggle('on', i<player.ammo);
+  for(let i=0;i<pips.length;i++) pips[i].classList.toggle('on', i<player.ammo);
+  $('msl-card').style.display=(PST.msl>0)?'block':'none';
   elK.textContent=pKills; // личный счёт — фраги союзников и краши красных в него не идут
   elLv.textContent=Math.max(0,playerLives);
   elLock.style.display=(state==='play'&&lockTarget)?'block':'none';
@@ -1755,7 +1794,7 @@ function restart(){
   player.pos.set(0,300,0);
   player.quat.set(0,0,0,1);
   player.speed=Math.round(PST.maxSpd*0.65); player.throttle=0.65; player.hp=PST.hp; player.alive=true;
-  player.ammo=4; player.ammoT=0; player.cdM=0; player.cd=0; player.lastHit=99; player.smokeT=0;
+  player.ammo=PST.msl; player.ammoT=0; player.cdM=0; player.cd=0; player.lastHit=99; player.smokeT=0;
   player.g=1; player.glocT=0; player.trailT=0;
   player.mesh.visible=true;
   for(const b of bullets){ b.on=false; b.mesh.visible=false; }
@@ -1847,7 +1886,7 @@ function updateWallet(){
 function renderHangar(){
   updateWallet();
   let html='';
-  for(let t=1;t<=5;t++){
+  for(let t=1;t<=TIER_ROMAN.length;t++){
     html+='<div class="tier-h">РАНГ '+TIER_ROMAN[t-1]+'</div>';
     for(const p of PLANES.filter(x=>x.tier===t)){
       const owned=PROG.owned.includes(p.id), sel=PROG.sel===p.id;
@@ -1858,7 +1897,7 @@ function renderHangar(){
       html+='<div class="plane-card'+(sel?' sel':'')+'">'
         +'<div class="tier-badge">'+TIER_ROMAN[t-1]+'</div>'
         +'<div class="pc-main"><div class="pc-name">'+p.name+'</div>'
-        +'<div class="pc-spec">'+Math.round(p.maxSpd*3.6)+' км/ч · '+p.hp+' HP · '+p.guns+' · урон '+p.dmg+'</div></div>'
+        +'<div class="pc-spec">'+(p.kph||Math.round(p.maxSpd*3.6))+' км/ч · '+p.hp+' HP · '+p.guns+' · урон '+p.dmg+'</div></div>'
         +btn+'</div>';
     }
   }
@@ -1959,6 +1998,9 @@ function animate(){
   renderer.render(scene,camera);
 }
 animate();
+
+
+
 
 
 
