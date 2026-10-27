@@ -135,6 +135,7 @@
           <div class="roster-row ally" id="rr-a0"><span>Сокол</span><b id="rk-a0">0</b></div>
           <div class="roster-row ally" id="rr-a1"><span>Стрела</span><b id="rk-a1">0</b></div>
           <div class="roster-row ally" id="rr-a2"><span>Клим</span><b id="rk-a2">0</b></div>
+          <div class="roster-row ally" id="rr-a3"><span>Тайфун</span><b id="rk-a3">0</b></div>
         </div>
         <div>
           <div class="roster-team tred">КРАСНЫЕ</div>
@@ -161,6 +162,7 @@
   <div id="hud-right">
     <div><div class="hud-label">ПРОЧНОСТЬ</div><div class="bar"><div id="hp-fill"></div></div><div class="hud-small" id="v-hp">100 / 100</div></div>
     <div style="display:none"><div class="hud-label">РАКЕТЫ</div><div id="missiles"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div></div>
+    <div><div class="hud-label">ЖИЗНИ</div><div class="hud-value" id="v-lives">3</div></div>
     <div><div class="hud-label">СБИТО</div><div class="hud-value" id="v-kills">0</div></div>
     <div id="tgt-list">
       <div class="hud-label">ЦЕЛИ</div>
@@ -226,7 +228,7 @@
 
 <div id="ov-death" class="overlay hidden">
   <div class="panel">
-    <div class="title">САМОЛЁТ СБИТ</div>
+    <div class="title" id="death-title">САМОЛЁТ СБИТ</div>
     <div class="subtitle">небо сегодня не ваше</div>
     <div class="stats">Сбито врагов: <span id="death-kills">0</span></div>
     <div class="hint" id="death-by" style="font-size:12px"></div>
@@ -273,8 +275,8 @@ const $ = id => document.getElementById(id);
 // ================= КОНСТАНТЫ =================
 const MIN_SPEED=24, MAX_SPEED=82, STALL=25;
 const BOT_NAMES=['Барон','Факел','Гриф','Ворон','Шторм'];
-const ALLY_NAMES=['Сокол','Стрела','Клим'];
-const ALLY_SLOTS=[[-46,10,58],[46,10,58],[0,42,78]]; // [вправо, вверх, назад] от игрока
+const ALLY_NAMES=['Сокол','Стрела','Клим','Тайфун'];
+const ALLY_SLOTS=[[-46,10,58],[46,10,58],[-28,42,100],[28,42,100]]; // [вправо, вверх, назад] от игрока
 
 // ================= РЕНДЕР / СЦЕНА =================
 const renderer = new THREE.WebGLRenderer({antialias:true});
@@ -537,7 +539,7 @@ for(let i=0;i<5;i++){
   const mesh = buildPlane(PAL_BOT);
   scene.add(mesh);
   const b = {mesh, prop:mesh.userData.prop, speed:50, hp:30, alive:true, team:'red',
-    name:BOT_NAMES[i], kills:0,
+    name:BOT_NAMES[i], kills:0, lives:3,
     burst:0, gunT:0, attackT:rand(0.5,2.2), threatT:0, evadeDir:V3(),
     orbitA:rand(0,Math.PI*2), orbitDir:Math.random()<0.5?-1:1, smokeT:0, vel:V3()};
   b.pos = mesh.position; b.quat = mesh.quaternion;
@@ -547,11 +549,11 @@ for(let i=0;i<5;i++){
 
 // союзные ведомые (синие, модель как у игрока)
 const ALLIES=[];
-for(let i=0;i<3;i++){
+for(let i=0;i<4;i++){
   const mesh = buildPlane(PAL_PLAYER);
   scene.add(mesh);
   const b = {mesh, prop:mesh.userData.prop, speed:50, hp:35, alive:true, team:'blue', slot:i,
-    name:ALLY_NAMES[i], kills:0,
+    name:ALLY_NAMES[i], kills:0, lives:3,
     burst:0, gunT:0, attackT:rand(0.5,2.2), threatT:0, evadeDir:V3(),
     orbitA:rand(0,Math.PI*2), orbitDir:Math.random()<0.5?-1:1, smokeT:0, vel:V3()};
   b.pos = mesh.position; b.quat = mesh.quaternion;
@@ -697,7 +699,7 @@ function toast(t){
 }
 
 // ================= СОСТОЯНИЕ ИГРЫ =================
-let state='menu', time=0, kills=0, camShake=0, dmgA=0;
+let state='menu', time=0, kills=0, playerLives=3, camShake=0, dmgA=0;
 let lockTarget=null, respawnQ=[], warnFlags={};
 let deathT=0, deadShown=false, lastKiller=null;
 
@@ -931,8 +933,8 @@ function killBot(b, killer){
   if(!b.alive) return;
   b.alive=false; b.mesh.visible=false;
   explosion(b.pos, 2.1);
+  if(b.team==='red') kills++; // любой уничтоженный красный — в общий счёт: и от игрока, и от союзников, и если разбился сам
   if(killer==='player'){
-    kills++;
     toast(['Цель уничтожена!','Сбит! Отличная работа!','Есть один!','Цель поражена!'][kills%4]);
   } else if(killer){
     killer.kills++;
@@ -940,7 +942,8 @@ function killBot(b, killer){
     else if(b.team==='blue') toast('Ведомый сбит: '+b.name);
     else toast('Вражеский самолёт разбился');
   } else toast(b.team==='blue'?'Ведомый разбился':'Вражеский самолёт разбился');
-  respawnQ.push(4.5+rand(0,3));
+  b.lives--;
+  if(b.lives>0) respawnQ.push({t:4.5+rand(0,3), b}); // жизни кончились — бот больше не респавнится
 }
 function killPlayer(){
   if(!player.alive) return;
@@ -952,8 +955,24 @@ function killPlayer(){
   let killer=null, kd=900;
   for(const b of bots){ if(!b.alive||b.team!=='red') continue; const d=b.pos.distanceTo(player.pos); if(d<kd){ kd=d; killer=b; } }
   if(killer){ killer.kills++; lastKiller=killer.name; } else lastKiller=null;
+  playerLives--; // жизнь потеряна; при 0 — экран поражения, иначе возрождение
   state='dead'; deathT=0; deadShown=false;
   lockTarget=null;
+}
+function respawnPlayer(){ // возрождение за жизнь: kills и бой сохраняются
+  player.pos.set(0,300,0);
+  player.quat.set(0,0,0,1);
+  player.speed=55; player.throttle=0.65; player.hp=100; player.alive=true;
+  player.ammo=4; player.ammoT=0; player.cdM=0; player.cd=0; player.lastHit=99; player.smokeT=0;
+  player.g=1; player.glocT=0; player.gPk=1; player.trailT=0;
+  player.mesh.visible=true;
+  mAccX=0; mAccY=0; mFltX=0; mFltY=0; lastMX=null; lastMY=null;
+  camQ.copy(player.quat); camInit=false;
+  camShake=0; dmgA=0;
+  state='play';
+  $('hud').classList.add('on');
+  toast('Возрождение! Осталось жизней: '+playerLives);
+  tryLock();
 }
 
 // ================= СТРЕЛЬБА =================
@@ -1012,11 +1031,10 @@ function botFront(b, T){
 }
 function updateBots(dt){
   for(let i=respawnQ.length-1;i>=0;i--){
-    respawnQ[i]-=dt;
-    if(respawnQ[i]<=0){
-      respawnQ.splice(i,1);
-      const dead=bots.find(b=>!b.alive);
-      if(dead) resetBot(dead);
+    respawnQ[i].t-=dt;
+    if(respawnQ[i].t<=0){
+      const e=respawnQ.splice(i,1)[0];
+      if(e.b.lives>0) resetBot(e.b); // респавн только при оставшихся жизнях
     }
   }
   for(const b of bots){
@@ -1129,8 +1147,8 @@ function updatePlayer(dt){
   const wP=clamp(player.ctrl.p*1.35*auth,-1.5,1.5);
   const wR=clamp(player.ctrl.r*2.5*auth,-1.5,1.5);
   const wY=clamp(player.ctrl.y*0.78*auth,-1.5,1.5);
-  // ===== ПЕРЕГРУЗКА: G = 1 + |V·ω(тангаж)| / 14.0 =====
-  const gT=1+Math.abs(player.speed*wP)/14.0; // модуль — без отрицательной перегрузки; /14 — LOC достижим на жёстком вираже
+  // ===== ПЕРЕГРУЗКА: G = 1 + |V·ω(тангаж)| / 16.0 =====
+  const gT=1+Math.abs(player.speed*wP)/16.0; // модуль — без отрицательной перегрузки; /16 — G растёт чуть медленнее
   player.g+=(gT-player.g)*(1-Math.exp(-dt*3.5)); // медленнее набирается — краткий рывок не «в темноту»
   if(player.glocT>0){ player.glocT-=dt; if(player.glocT<=0) player.glocT=-0.001; } // фаза блэкаута
   else if(player.glocT<0){ player.glocT-=dt; if(player.glocT<-1.2) player.glocT=0; } // плавный выход
@@ -1426,14 +1444,14 @@ const tgtRows=[];
 // ================= HUD =================
 const elS=$('v-speed'), elA=$('v-alt'), elT=$('thr-fill'), elTp=$('v-thr'),
       elH=$('hp-fill'), elHn=$('v-hp'), elM=$('missiles'), elK=$('v-kills'),
-      elLock=$('lock-ind'), elWarn=$('warn'), elDmg=$('dmg'),
+      elLock=$('lock-ind'), elWarn=$('warn'), elDmg=$('dmg'), elLv=$('v-lives'),
       elRkMe=$('rk-me'), elTbB=$('tb-blue'), elTbR=$('tb-red'),
       elTbBn=$('tb-blue-n'), elTbRn=$('tb-red-n'),
       elG=$('v-g'), elGveil=$('gveil'), elGblack=$('gblack'), elGred=$('gred'), elGbig=$('gbig');
 const elRkB=[], elRrB=[];
 for(let i=0;i<5;i++){ elRkB.push($('rk-b'+i)); elRrB.push($('rr-b'+i)); }
 const elRkA=[], elRrA=[];
-for(let i=0;i<3;i++){ elRkA.push($('rk-a'+i)); elRrA.push($('rr-a'+i)); }
+for(let i=0;i<4;i++){ elRkA.push($('rk-a'+i)); elRrA.push($('rr-a'+i)); }
 function updateHUD(dt){
   elS.textContent=Math.round(player.speed*3.6);
   elA.textContent=Math.max(0,Math.round(player.pos.y));
@@ -1446,6 +1464,7 @@ function updateHUD(dt){
   const pips=elM.children;
   for(let i=0;i<4;i++) pips[i].classList.toggle('on', i<player.ammo);
   elK.textContent=kills;
+  elLv.textContent=Math.max(0,playerLives);
   elLock.style.display=(state==='play'&&lockTarget)?'block':'none';
   // предупреждения
   let w='';
@@ -1474,7 +1493,7 @@ function updateHUD(dt){
   }
   // ---- полоски команд (синие = HP игрока + ведомых; красные = прогресс уничтожения, только от фрагов) ----
   let blueHp=Math.max(0,player.hp); for(const al of ALLIES) if(al.alive) blueHp+=Math.max(0,al.hp);
-  elTbB.style.width=(blueHp/205*100)+'%';
+  elTbB.style.width=(blueHp/240*100)+'%'; // 100 (игрок) + 4×35 (ведомые)
   elTbBn.textContent=Math.round(blueHp);
   elTbR.style.width = Math.max(0, 100 - (kills / 15) * 100) + '%'; // убывает только от убийств — респавн ботов не лечит полоску
   elTbRn.textContent=Math.max(0,15-kills); // сколько фрагов осталось до победы
@@ -1547,7 +1566,8 @@ function restart(){
   missiles.length=0;
   for(const p of parts){ p.on=false; p.spr.visible=false; }
   for(const b of boomLights){ b.t=0; b.l.visible=false; }
-  for(const b of bots) resetBot(b);
+  for(const b of bots){ b.lives=3; resetBot(b); }
+  playerLives=3;
   kills=0; camShake=0; dmgA=0; respawnQ.length=0; warnFlags={};
   lockTarget=null; deadShown=false; lastKiller=null;
   mAccX=0; mAccY=0; mFltX=0; mFltY=0; lastMX=null; lastMY=null;
@@ -1589,7 +1609,8 @@ function returnToMenu(){
   missiles.length=0;
   for(const p of parts){ p.on=false; p.spr.visible=false; }
   for(const b of boomLights){ b.t=0; b.l.visible=false; }
-  for(const b of bots) resetBot(b);
+  for(const b of bots){ b.lives=3; resetBot(b); }
+  playerLives=3;
   kills=0; camShake=0; dmgA=0; respawnQ.length=0; warnFlags={};
   lockTarget=null; deadShown=false; lastKiller=null;
   mAccX=0; mAccY=0; mFltX=0; mFltY=0; lastMX=null; lastMY=null;
@@ -1603,6 +1624,7 @@ function showVictory(){
   if(document.pointerLockElement) document.exitPointerLock();
 }
 function showDeath(){
+  $('death-title').textContent='ВЫ ПРОИГРАЛИ'; // оверлей показывается только когда жизни кончились
   $('death-kills').textContent=kills;
   $('death-by').textContent=lastKiller?('Вас сбил: '+lastKiller):'Самолёт разбился';
   $('ov-death').classList.remove('hidden');
@@ -1629,7 +1651,7 @@ function animate(){
       if(state==='play'){ updatePlayer(dt); computeLock(); }
       else if(state==='dead'){
         deathT+=dt;
-        if(deathT>1.4&&!deadShown){ deadShown=true; showDeath(); }
+        if(deathT>1.4&&!deadShown){ deadShown=true; if(playerLives>0) respawnPlayer(); else showDeath(); } // жизнь есть — возрождение, нет — поражение
       }
       if(kills>=15 && state==='play'){ showVictory(); return; } // победа — выходим из кадра до обновлений
       updateBots(dt);
