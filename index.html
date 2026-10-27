@@ -699,7 +699,7 @@ function toast(t){
 }
 
 // ================= СОСТОЯНИЕ ИГРЫ =================
-let state='menu', time=0, kills=0, playerLives=3, blueLives=15, camShake=0, dmgA=0; // blueLives — все жизни синих (5×3): полоска синих убывает только от смертей
+let state='menu', time=0, kills=0, pKills=0, playerLives=3, blueLives=15, camShake=0, dmgA=0; // kills — общий счёт команды (победа/красная полоска), pKills — личный счёт игрока; blueLives — все жизни синих (5×3)
 let lockTarget=null, respawnQ=[], warnFlags={};
 let deathT=0, deadShown=false, lastKiller=null;
 
@@ -936,7 +936,8 @@ function killBot(b, killer){
   if(b.team==='red') kills++; // любой уничтоженный красный — в общий счёт: и от игрока, и от союзников, и если разбился сам
   else blueLives--; // любая смерть синего ведомого — минус жизнь из общего счёта (15)
   if(killer==='player'){
-    toast(['Цель уничтожена!','Сбит! Отличная работа!','Есть один!','Цель поражена!'][kills%4]);
+    pKills++; // личный счёт игрока: только сбитые им самим (фраги союзников и краши красных в него не идут)
+    toast(['Цель уничтожена!','Сбит! Отличная работа!','Есть один!','Цель поражена!'][pKills%4]);
   } else if(killer){
     killer.kills++;
     if(killer.team==='blue') toast(killer.name+' сбил: '+b.name);
@@ -1467,7 +1468,7 @@ function updateHUD(dt){
   elHn.textContent=Math.ceil(hp)+' / 100';
   const pips=elM.children;
   for(let i=0;i<4;i++) pips[i].classList.toggle('on', i<player.ammo);
-  elK.textContent=kills;
+  elK.textContent=pKills; // личный счёт — фраги союзников и краши красных в него не идут
   elLv.textContent=Math.max(0,playerLives);
   elLock.style.display=(state==='play'&&lockTarget)?'block':'none';
   // предупреждения
@@ -1485,7 +1486,7 @@ function updateHUD(dt){
   if(player.alive&&player.hp<30) o=Math.max(o,0.18+0.1*Math.sin(time*6));
   elDmg.style.opacity=o;
   // ---- ростер команд ----
-  elRkMe.textContent=kills;
+  elRkMe.textContent=pKills; // в строке «Вы» — личный счёт
   for(let i=0;i<bots.length;i++){
     if(bots[i].team!=='red') continue;
     elRkB[i].textContent=bots[i].kills;
@@ -1571,7 +1572,7 @@ function restart(){
   for(const b of boomLights){ b.t=0; b.l.visible=false; }
   for(const b of bots){ b.lives=3; resetBot(b); }
   playerLives=3; blueLives=15;
-  kills=0; camShake=0; dmgA=0; respawnQ.length=0; warnFlags={};
+  kills=0; pKills=0; camShake=0; dmgA=0; respawnQ.length=0; warnFlags={};
   lockTarget=null; deadShown=false; lastKiller=null;
   mAccX=0; mAccY=0; mFltX=0; mFltY=0; lastMX=null; lastMY=null;
   camQ.copy(player.quat); camInit=false;
@@ -1614,7 +1615,7 @@ function returnToMenu(){
   for(const b of boomLights){ b.t=0; b.l.visible=false; }
   for(const b of bots){ b.lives=3; resetBot(b); }
   playerLives=3; blueLives=15;
-  kills=0; camShake=0; dmgA=0; respawnQ.length=0; warnFlags={};
+  kills=0; pKills=0; camShake=0; dmgA=0; respawnQ.length=0; warnFlags={};
   lockTarget=null; deadShown=false; lastKiller=null;
   mAccX=0; mAccY=0; mFltX=0; mFltY=0; lastMX=null; lastMY=null;
   mouseDown=false; zoomHeld=false;
@@ -1683,6 +1684,10 @@ function animate(){
   renderer.render(scene,camera);
 }
 animate();
+
+
+
+
 
 
 
