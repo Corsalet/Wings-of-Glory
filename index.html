@@ -998,8 +998,8 @@ function botFire(b){
   const d=b.pos.distanceTo(T.pos);
   _v2.copy(T.pos).addScaledVector(T.vel, d/430*0.85);
   _v2.sub(_v1).normalize();
-  // небольшой разброс 3–5° — боты бьют заметно точнее
-  const dev=rand(3,5)*Math.PI/180, az=rand(0,Math.PI*2);
+  // разброс: красные бьют точнее (2–3.5°), союзники — 3–5° (враги усилены)
+  const dev=(b.team==='red'?rand(2,3.5):rand(3,5))*Math.PI/180, az=rand(0,Math.PI*2);
   _v3.copy(Math.abs(_v2.y)>0.9?AX:AY).cross(_v2).normalize();
   _v4.copy(_v2).cross(_v3);
   _v2.multiplyScalar(Math.cos(dev))
@@ -1089,24 +1089,27 @@ function updateBots(dt){
     }
     if(engage&&!botFront(b,T)&&distT<380&&b.threatT<=0){
       b.threatT=rand(2.2,4);
-      b.evadeDir.set(rand(-1,1),rand(0.2,0.9),rand(-1,1)).normalize();
+      b.evadeDir.set(rand(-1,1),rand(-0.35,0.55),rand(-1,1)).normalize(); // без тяги вверх — боты не «забиваются» под потолок
       b.evadeDir.addScaledVector(_v3.copy(T.pos).sub(b.pos).normalize(),-1.2).normalize();
     }
     if(b.threatT>0) b.threatT-=dt;
+    // боты не забираются выше зоны досягаемости (~500 м над игроком) — иначе их не догнать
+    if(b.pos.y>player.pos.y+500) target.y=Math.min(target.y,b.pos.y-400);
     steerToward(b, target, dt);
-    const tSpd = engage?74:(b.team==='blue'?clamp(player.speed+8+b.pos.distanceTo(target)*0.1,49,95):55);
+    const tSpd = engage?(b.team==='red'?78:74):(b.team==='blue'?clamp(player.speed+8+b.pos.distanceTo(target)*0.1,49,95):62); // красные быстрее (78/62) — враги усилены
     b.speed += (tSpd-b.speed)*(1-Math.exp(-dt*0.5));
     _v5.copy(FWD).applyQuaternion(b.quat);
     b.pos.addScaledVector(_v5, b.speed*dt);
     b.vel.copy(_v5).multiplyScalar(b.speed);
     b.prop.rotation.z += 45*dt;
-    if(engage&&distT<820){ // очереди по цели
+    const fireR=b.team==='red'?950:820; // красные открывают огонь дальше
+    if(engage&&distT<fireR){ // очереди по цели
       b.attackT-=dt;
       if(b.attackT<=0){
         _v5.copy(FWD).applyQuaternion(b.quat);
         _v6.copy(T.pos).sub(b.pos).normalize();
-        if(_v5.dot(_v6)>0.955){ b.burst=6; b.gunT=0; }
-        b.attackT=rand(1.1,2.6);
+        if(_v5.dot(_v6)>0.955){ b.burst=b.team==='red'?8:6; b.gunT=0; } // красные бьют длиннее и чаще
+        b.attackT=b.team==='red'?rand(0.9,2.1):rand(1.1,2.6);
       }
     }
     if(b.burst>0){
@@ -1680,7 +1683,11 @@ function animate(){
   renderer.render(scene,camera);
 }
 animate();
+
+
+
 })();
+
 </script>
 </body>
 </html>
