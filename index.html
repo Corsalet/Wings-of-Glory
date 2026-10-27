@@ -699,7 +699,7 @@ function toast(t){
 }
 
 // ================= СОСТОЯНИЕ ИГРЫ =================
-let state='menu', time=0, kills=0, playerLives=3, camShake=0, dmgA=0;
+let state='menu', time=0, kills=0, playerLives=3, blueLives=15, camShake=0, dmgA=0; // blueLives — все жизни синих (5×3): полоска синих убывает только от смертей
 let lockTarget=null, respawnQ=[], warnFlags={};
 let deathT=0, deadShown=false, lastKiller=null;
 
@@ -934,6 +934,7 @@ function killBot(b, killer){
   b.alive=false; b.mesh.visible=false;
   explosion(b.pos, 2.1);
   if(b.team==='red') kills++; // любой уничтоженный красный — в общий счёт: и от игрока, и от союзников, и если разбился сам
+  else blueLives--; // любая смерть синего ведомого — минус жизнь из общего счёта (15)
   if(killer==='player'){
     toast(['Цель уничтожена!','Сбит! Отличная работа!','Есть один!','Цель поражена!'][kills%4]);
   } else if(killer){
@@ -955,7 +956,7 @@ function killPlayer(){
   let killer=null, kd=900;
   for(const b of bots){ if(!b.alive||b.team!=='red') continue; const d=b.pos.distanceTo(player.pos); if(d<kd){ kd=d; killer=b; } }
   if(killer){ killer.kills++; lastKiller=killer.name; } else lastKiller=null;
-  playerLives--; // жизнь потеряна; при 0 — экран поражения, иначе возрождение
+  playerLives--; blueLives--; // жизнь потеряна (и из общего счёта синих тоже); при 0 — экран поражения, иначе возрождение
   state='dead'; deathT=0; deadShown=false;
   lockTarget=null;
 }
@@ -1041,17 +1042,17 @@ function updateBots(dt){
     if(!b.alive) continue;
     _v3.copy(player.pos).sub(b.pos);
     const dist=_v3.length();
-    // выбор цели: красные охотятся на синих (игрок приоритетен, союзник — если заметно ближе),
+    // выбор цели: красные атакуют ближайшего синего (игрок и ведомые равноправны),
     // синие атакуют красного, ближайшего к игроку (защита) или к себе
     let T=null;
     if(state==='play'){
-      if(b.team==='red'){
-        if(player.alive) T=player;
-        let bd=T?dist:1e9;
+      if(b.team==='red'){ // ближайшая цель — без приоритета игрока
+        let bd=1e9;
+        if(player.alive){ T=player; bd=dist; }
         for(const al of ALLIES){
           if(!al.alive) continue;
           const d2=b.pos.distanceTo(al.pos);
-          if(d2<bd*0.7){ T=al; bd=d2; }
+          if(d2<bd){ T=al; bd=d2; }
         }
       } else {
         let best=1e9;
@@ -1494,10 +1495,9 @@ function updateHUD(dt){
     elRkA[i].textContent=ALLIES[i].kills;
     elRrA[i].classList.toggle('dead', !ALLIES[i].alive);
   }
-  // ---- полоски команд (синие = HP игрока + ведомых; красные = прогресс уничтожения, только от фрагов) ----
-  let blueHp=Math.max(0,player.hp); for(const al of ALLIES) if(al.alive) blueHp+=Math.max(0,al.hp);
-  elTbB.style.width=(blueHp/240*100)+'%'; // 100 (игрок) + 4×35 (ведомые)
-  elTbBn.textContent=Math.round(blueHp);
+  // ---- полоски команд (обе убывают только от потерь: синие — от смертей, красные — от фрагов; респавн их не возвращает) ----
+  elTbB.style.width = (Math.max(0, blueLives) / 15 * 100) + '%'; // 15 = 5 синих × 3 жизни
+  elTbBn.textContent = Math.max(0, blueLives);
   elTbR.style.width = Math.max(0, 100 - (kills / 15) * 100) + '%'; // убывает только от убийств — респавн ботов не лечит полоску
   elTbRn.textContent=Math.max(0,15-kills); // сколько фрагов осталось до победы
   // ---- перегрузка: индикатор G, вуаль, G-LOC, redout ----
@@ -1570,7 +1570,7 @@ function restart(){
   for(const p of parts){ p.on=false; p.spr.visible=false; }
   for(const b of boomLights){ b.t=0; b.l.visible=false; }
   for(const b of bots){ b.lives=3; resetBot(b); }
-  playerLives=3;
+  playerLives=3; blueLives=15;
   kills=0; camShake=0; dmgA=0; respawnQ.length=0; warnFlags={};
   lockTarget=null; deadShown=false; lastKiller=null;
   mAccX=0; mAccY=0; mFltX=0; mFltY=0; lastMX=null; lastMY=null;
@@ -1613,7 +1613,7 @@ function returnToMenu(){
   for(const p of parts){ p.on=false; p.spr.visible=false; }
   for(const b of boomLights){ b.t=0; b.l.visible=false; }
   for(const b of bots){ b.lives=3; resetBot(b); }
-  playerLives=3;
+  playerLives=3; blueLives=15;
   kills=0; camShake=0; dmgA=0; respawnQ.length=0; warnFlags={};
   lockTarget=null; deadShown=false; lastKiller=null;
   mAccX=0; mAccY=0; mFltX=0; mFltY=0; lastMX=null; lastMY=null;
@@ -1683,6 +1683,10 @@ function animate(){
   renderer.render(scene,camera);
 }
 animate();
+
+
+
+
 
 
 
