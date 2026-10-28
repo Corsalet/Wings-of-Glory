@@ -160,7 +160,7 @@
   .hidden{display:none!important}
 </style>
 </head>
-<body><script>window.__ERRS=[];window.addEventListener("error",function(e){window.__ERRS.push(String(e&&e.message||e))});</script>
+<body>
 <div id="vig"></div>
 <div id="dmg"></div>
 <div id="gveil"></div>
@@ -208,6 +208,7 @@
     <div><div class="hud-label">ПРОЧНОСТЬ</div><div class="bar"><div id="hp-fill"></div></div><div class="hud-small" id="v-hp">100 / 100</div></div>
     <div id="msl-card" style="display:none"><div class="hud-label">РАКЕТЫ</div><div id="missiles"></div></div>
     <div id="flr-card" style="display:none"><div class="hud-label">ЛОВУШКИ · G</div><div id="flares"></div></div>
+    <div id="cobra-card" style="display:none"><div class="hud-label">КОБРА · C</div><div class="bar"><div id="cobra-fill"></div></div></div>
     <div><div class="hud-label">ЖИЗНИ</div><div class="hud-value" id="v-lives">3</div></div>
     <div><div class="hud-label">СБИТО</div><div class="hud-value" id="v-kills">0</div></div>
     <div id="tgt-list">
@@ -249,6 +250,7 @@
     <div class="kp-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#ffcf8f" stroke-width="1.3"><circle cx="7" cy="7" r="4.6"/><path d="M7 0.5v3M7 10.5v3M0.5 7h3M10.5 7h3"/><circle cx="7" cy="7" r="1" fill="#ff7a4a" stroke="none"/></svg><span class="kbd">ЛКМ</span>огонь</div>
     <div class="kp-item"><span class="kbd">Space</span>ракета</div>
     <div class="kp-item"><span class="kbd">G</span>ловушки</div>
+    <div class="kp-item"><span class="kbd">C</span>кобра</div>
     <div class="kp-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#ffcf8f" stroke-width="1.3"><rect x="1.5" y="3.5" width="11" height="8" rx="1.5"/><path d="M5 3.5 L6 1.8 h2 L9 3.5"/><circle cx="7" cy="7.5" r="2.2"/></svg><span class="kbd">B</span>камера</div>
     <div class="kp-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#ffcf8f" stroke-width="1.3"><circle cx="6" cy="6" r="3.8"/><path d="M9 9 L12.5 12.5"/></svg><span class="kbd">Z / ПКМ</span>зум</div>
   </div>
@@ -644,42 +646,53 @@ function buildPlane(p){
     // ===== РЕАКТИВНЫЕ (ранги VI–X): круглый фюзеляж, нос-игла, стреловидные трапеции, форсаж =====
     add(new THREE.CylinderGeometry(0.30,0.46,3.4,8), mBody, 0,0.05,-0.55, Math.PI/2); // корпус, сужение к хвосту
     add(new THREE.CylinderGeometry(0.13,0.30,1.9,8), mBody, 0,0.05,2.05, Math.PI/2);  // хвостовая балка
-    add(new THREE.ConeGeometry(0.46,2.1,10), mBody, 0,0.05,-3.3, -Math.PI/2);         // нос-игла
+    const nc=add(new THREE.ConeGeometry(0.46,2.1,10), mBody, 0,0.05,-3.3, -Math.PI/2); // нос-«клюв»: широкий и плоский, как на фото
+    nc.scale.set(1.12,1,0.85); // расширяем в бока, прижимаем сверху — плоская «лопата» с кромками
     // сопла: спарка двигателей у современных (ранг IX+), одиночное — у рангов VI–VIII
     if(p.tier>=9) for(const s of [-1,1]) add(new THREE.CylinderGeometry(0.24,0.20,0.55,8), mDark, s*0.26,0.05,3.15, Math.PI/2);
     else add(new THREE.CylinderGeometry(0.34,0.28,0.55,8), mDark, 0,0.05,3.15, Math.PI/2);
     // воздухозаборники: боковые (4-е поколение) или брюшной (МиГ-21 и раньше)
     if(p.tier>=9){ for(const s of [-1,1]) add(new THREE.BoxGeometry(0.30,0.44,1.9), mDark, s*0.60,0.0,-1.0); }
     else add(new THREE.BoxGeometry(0.52,0.30,1.7), mDark, 0,-0.40,-0.8);
-    // параметры крыла: Су-57 (prem) — обрезанный треугольник со стреловидностью 42° и длинной корневой
-    // хордой (наплыв), задняя кромка чуть вынесена вперёд; пропорция размах/длина 0.70 — как на эталонном фото.
-    // Остальные реактивные — трапеция 33° (семейство МиГ-15/29), пропорция 0.77.
-    const WR=p.prem?3.35:2.20, WT=p.prem?0.60:0.50, WS=p.prem?2.75:3.00, WSW=p.prem?2.45:1.95, WZ=p.prem?-2.45:-1.35, WY=p.prem?0.30:0.32;
-    markY=WY+0.085; markX=WS*0.85;
+    // параметры крыла: Су-57 (prem) — трапеция 42° посажена НАЗАД (корень ПК на ~45% длины, корень ЗК у сопел —
+    // как на эталонном фото сверху), ЗК чуть вынесена вперёд, размах/длина 0.70; впереди вдоль борта —
+    // крутой наплыв-LEX (вторая ступень ПК). Остальные реактивные — трапеция 33° (МиГ-15/29), пропорция 0.77.
+    const WR=p.prem?3.35:2.20, WT=p.prem?0.60:0.50, WS=p.prem?2.75:3.00, WSW=p.prem?2.45:1.95, WZ=p.prem?-0.67:-1.35, WY=p.prem?0.30:0.32;
+    markX=WS*0.85; markY=WY+0.085-(p.prem?markX*0.04:0); // звезда следует анхедралу крыла
     markZ=WZ+(WSW*markX/WS + WR-(WR-WSW-WT)*markX/WS)/2; // середина хорды на выносе markX
-    if(p.prem){ // Су-57: плоский несущий корпус — боковые панели (кромка-чайн к носу + мотогондолы к соплам)
+    if(p.prem){ // Су-57: плоский несущий корпус — крутой наплыв-LEX вдоль борта (стыкуется с корнем ПК крыла)
       for(const s of [-1,1]){
-        add(new THREE.BoxGeometry(0.34,0.34,3.0), mBody, s*0.50,0.10,-1.35);
-        add(new THREE.BoxGeometry(0.40,0.36,2.3), mBody, s*0.42,0.06, 1.85);
+        const lx=new THREE.Mesh(wingGeo(2.75,0.55,0.67,3.24,0.11,s), mBody); // стреловидность наплыва ~78°
+        lx.position.set(s*0.30,0.31,-3.05); g.add(lx); // кромка от самого кончика носа, ЗК — точно на ПК крыла (kink)
+        add(new THREE.BoxGeometry(0.44,0.34,2.70), mBody, s*0.52,0.06,-1.20); // борт под наплывом
+        add(new THREE.BoxGeometry(0.40,0.36,2.30), mBody, s*0.42,0.06, 1.85); // мотогондолы к соплам
       }
     }
-    // крыло-трапеция (обрезанный треугольник у Су-57) + закрылковая полоса на задней кромке
+    // крыло-трапеция (обрезанный треугольник у Су-57) + закрылковая полоса на задней кромке;
+    // у Су-57 — лёгкий анхедрал (полоса закрылка следует прогибу)
     for(const s of [-1,1]){
       const w=new THREE.Mesh(wingGeo(WR,WT,WS,WSW,0.13,s), mWing);
-      w.position.set(0,WY,WZ); g.add(w);
-      add(new THREE.BoxGeometry(WS*0.34,0.05,0.26), mAcc, s*WS*0.74, WY+0.075, WZ+WR-(WR-WSW-WT)*0.74-0.15, 0, s*(WR-WSW-WT)/WS, 0);
+      w.position.set(0,WY,WZ); if(p.prem) w.rotation.z=-s*0.04; g.add(w);
+      add(new THREE.BoxGeometry(WS*0.34,0.05,0.26), mAcc, s*WS*0.74, WY+0.075-(p.prem?WS*0.74*0.04:0), WZ+WR-(WR-WSW-WT)*0.74-0.15, 0, s*(WR-WSW-WT)/WS, p.prem?-s*0.04:0);
     }
-    // стабилизатор (у Су-57 — 45°, поднят к кромке крыла) + киль (у 4-го поколения — двойной)
+    // стабилизатор: у Су-57 — 43°, корень у сопел, ЗА ЗК крыла виден чистый просвет (как на фото);
+    // у 4-го поколения — позади крыла на балке
     for(const s of [-1,1]){
-      const t=new THREE.Mesh(wingGeo(p.prem?1.55:1.10, p.prem?0.45:0.32, p.prem?2.0:1.75, p.prem?2.0:1.10, 0.09, s), mWing);
-      t.position.set(0,0.24,p.prem?1.00:2.55); g.add(t);
+      const t=new THREE.Mesh(wingGeo(p.prem?1.10:1.10, p.prem?0.38:0.32, p.prem?1.55:1.75, p.prem?1.45:1.10, 0.09, s), mWing);
+      t.position.set(0,p.prem?0.30:0.24,p.prem?2.10:2.55); g.add(t);
     }
-    if(p.tier>=9){ for(const s of [-1,1]) add(new THREE.BoxGeometry(0.08,1.25,0.95), mAcc, s*0.55,0.80,3.15, 0.32, 0, -s*0.22); } // V-образные кили
+    if(p.tier>=9){ // парные кили: наклон наружу (у Су-57 ~23°), стреловидная трапеция вместо бокса
+      const FC=p.prem?0.40:0.22;
+      for(const s of [-1,1]){
+        const f=new THREE.Mesh(wingGeo(p.prem?1.30:1.15, p.prem?0.50:0.45, p.prem?1.25:1.15, p.prem?0.70:0.55, 0.08, s), mAcc);
+        f.position.set(s*0.44,0.40,p.prem?2.55:2.85); f.rotation.z=s*(Math.PI/2-FC); g.add(f);
+      }
+    }
     else add(new THREE.BoxGeometry(0.09,1.55,1.15), mAcc, 0,0.80,3.1, 0.30);
     // фонарь-капля + гаргрот
     const cp=add(new THREE.SphereGeometry(0.36,10,8), new THREE.MeshPhongMaterial({color:0xa8c8dc,transparent:true,opacity:0.5,side:THREE.DoubleSide}), 0,0.50,-0.15);
     cp.scale.set(0.95,0.75,2.1);
-    add(new THREE.BoxGeometry(0.5,0.22,1.6), mDark, 0,0.40,1.35);
+    add(new THREE.BoxGeometry(0.5,0.22,1.6), mBody, 0,0.40,1.35); // гаргрот — в цвет корпуса (как на фото)
     // турбины в соплах (вращаются кодом винта) + форсажные пламена (мерцают в animate; ab — массив)
     const fanXs = p.tier>=9 ? [-0.26,0.26] : [0];
     prop = new THREE.Group(); prop.position.set(0,0.05,3.45);
@@ -702,7 +715,7 @@ function buildPlane(p){
     if(p.msl>0){
       const mslM=new THREE.MeshPhongMaterial({color:0xd8d2c8, flatShading:true});
       const n=Math.min(2,Math.ceil(p.msl/2));
-      const pz=p.prem?-0.30:0.30; // под хордой нового крыла (Су-57 — ближе к передней кромке)
+      const pz=p.prem?1.45:0.30; // под хордой крыла (у Су-57 крыло смещено назад — пилоны у его ПК)
       for(const s of [-1,1]) for(let i=0;i<n;i++){
         const px=s*(WS*0.47+i*WS*0.27);
         add(new THREE.BoxGeometry(0.06,0.24,0.5), mDark, px,0.18,pz);
@@ -823,11 +836,11 @@ function pixelCamoTex(cols,rx,ry){
     // база — диагональные «осколки» (равномерно все цвета), сверху случайные вкрапления
     let ci=(x*2+y*3)%cols.length;
     if(Math.random()<0.35) ci=(Math.random()*cols.length)|0;
-    g.fillStyle=cols[ci];
+    g.fillStyle='#'+cols[ci].toString(16).padStart(6,'0'); // числа ≠ CSS-цвет — иначе canvas чёрный
     g.fillRect(x*8,y*8,8,8);
   }
   for(let i=0;i<12;i++){ // вытянутые пятна поверх сетки — «осиный» раскрой
-    g.fillStyle=cols[(Math.random()*cols.length)|0];
+    g.fillStyle='#'+cols[(Math.random()*cols.length)|0].toString(16).padStart(6,'0');
     g.fillRect(((Math.random()*8)|0)*8, ((Math.random()*8)|0)*8, 8*(1+((Math.random()*2)|0)), 8);
   }
   const t=new THREE.CanvasTexture(c);
@@ -850,6 +863,7 @@ const player = {
   speed:55, throttle:0.65, hp:100, alive:true,
   ammo:4, ammoT:0, cd:0, cdM:0, lastHit:99, smokeT:0,
   flares:0, flaresMax:0, flareCd:0,
+  cobraT:0, cobraCd:0, cobraP:0, cobraSpd:0, cobraDir:V3(), // кобра Су-57: таймер, кулдаун, накопленный тангаж, скорость на входе, горизонталь траектории
   ctrl:{p:0,r:0,y:0}, vel:V3(),
   g:1, gPk:1, glocT:0, trailT:0,
   pst:null, hpMax:100, meshBuilt:null
@@ -877,6 +891,7 @@ function applyPlayerPlane(){ // применить выбранный в анг�
   }
   player.ammo=PST.msl; player.ammoT=0; player.cdM=0; // боекомплект ракет — от ТТХ самолёта (поршневые: 0)
   player.flaresMax=PST.jet?(PST.msl>0?6:4):0; player.flares=player.flaresMax; player.flareCd=0; // ловушки: только реактивные
+  player.cobraT=0; player.cobraCd=0; player.cobraP=0; // кобра — чистый лист при смене самолёта
   $('missiles').innerHTML='<i></i>'.repeat(PST.msl||0);
   $('flares').innerHTML='<i></i>'.repeat(player.flaresMax);
 }
@@ -897,7 +912,7 @@ function resetBot(b){
     b.burst=0; b.threatT=0; b.attackT=rand(1,3); b.orbitA=rand(0,Math.PI*2);
     b.mesh.quaternion.copy(player.quat);
     b.vel.set(0,0,0);
-    b.mslAmmo=bp.msl||0; b.mslCd=rand(5,9); b.flares=bp.jet?3:0; b.flareCd=rand(1,3); // ракеты/ловушки ботов — на каждую жизнь
+    b.mslAmmo=bp.msl||0; b.mslCd=rand(5,9); b.flares=bp.jet?3:0; b.flareCd=rand(1,3); b.cobraN=bp.prem?2:0; b.cobraCd=0; // ракеты/ловушки/кобра ботов — на каждую жизнь
     return;
   }
   const a=rand(0,Math.PI*2), r=rand(4000,5200); // спавн красных в 4–5.2 км от игрока
@@ -907,7 +922,7 @@ function resetBot(b){
   b.burst=0; b.threatT=0; b.attackT=rand(0.5,2.2); b.orbitA=rand(0,Math.PI*2);
   b.mesh.lookAt(player.pos); b.mesh.rotateY(Math.PI);
   b.vel.set(0,0,0);
-  b.mslAmmo=bp.msl||0; b.mslCd=rand(5,9); b.flares=bp.jet?3:0; b.flareCd=rand(1,3); // ракеты/ловушки ботов — на каждую жизнь
+  b.mslAmmo=bp.msl||0; b.mslCd=rand(5,9); b.flares=bp.jet?3:0; b.flareCd=rand(1,3); b.cobraN=bp.prem?2:0; b.cobraCd=0; // ракеты/ловушки/кобра ботов — на каждую жизнь
 }
 for(let i=0;i<5;i++){
   const mesh = buildPlane(PAL_BOT);
@@ -960,6 +975,7 @@ window.addEventListener('keydown', e=>{
   else if(e.code==='KeyM') AudioSys.toggleMute();
   else if(e.code==='Space' && state==='play') fireMissile(); // реактивные ранги: пуск ракеты
   else if(e.code==='KeyG' && state==='play') deployFlares(); // тепловые ловушки — отвод ракет
+  else if(e.code==='KeyC' && state==='play') tryCobra(); // кобра Су-57 — срыв захвата ракет
   else if(e.code==='KeyR' && (state==='play'||state==='dead')) restart();
   else if(e.code==='Escape'&&document.getElementById('ov-code')&&!document.getElementById('ov-code').classList.contains('hidden')) closeCodeModal();
   else if(e.code==='Escape'||e.code==='KeyP') togglePause();
@@ -1397,6 +1413,31 @@ function deployFlares(){ // игрок: клавиша G. Отводит ТОЛ�
   AudioSys.flareS();
   toast(saved?'Ловушки отработали — ракета уведена':'Ловушки отработаны');
 }
+function tryCobra(){ // игрок: клавиша C — только Су-57. Ракеты в окне 160–560 м срываются с захвата («правильное исполнение»)
+  if(!player.alive) return;
+  if(!PST.prem){ toast('Кобра — фирменный приём только Су-57'); return; }
+  if(player.cobraT>0) return;
+  if(player.cobraCd>0){ toast('Кобра: восстановление '+Math.ceil(player.cobraCd)+' с'); return; }
+  if(player.speed<PST.minSpd+34){ toast('Мало скорости — кобра не выйдет'); return; }
+  const gh=Math.max(terrainHeight(player.pos.x,player.pos.z),-2);
+  if(player.pos.y<gh+160){ toast('Слишком низко для кобры!'); return; }
+  let broke=0;
+  for(const m of missiles){
+    if(m.team!=='red'||m.target!==player) continue;
+    const d=m.mesh.position.distanceTo(player.pos);
+    if(d>160&&d<560){ // окно: раньше — ракета дожмёт после манёвра, позже — уже поздно
+      m.target=null; m.dir.y-=0.22; m.dir.normalize(); m.life=Math.min(m.life,3.2); broke++;
+    }
+  }
+  player.cobraT=2.5; player.cobraCd=14;
+  _v1.copy(FWD).applyQuaternion(player.quat); _v1.y=0; // траектория — горизонталь на момент ввода
+  if(_v1.lengthSq()<0.01) _v1.set(0,0,-1);
+  player.cobraDir.copy(_v1).normalize();
+  player.cobraSpd=player.speed;
+  AudioSys.burst(1.2,260,1.0,0.5); // рёв двигателя на сверхбольшом угле
+  camShake=Math.max(camShake,0.5);
+  toast(broke?'КОБРА! Ракета сорвалась с захвата':'КОБРА');
+}
 function botFlares(b){ // ИИ ловушек: боты отрабатывают сами, шанс отвода ниже, чем у игрока
   const fresh=ejectFlares(b.pos,b.quat,3);
   let saved=0;
@@ -1467,6 +1508,7 @@ function respawnPlayer(){ // возрождение за жизнь: kills и б
   player.speed=Math.round(PST.maxSpd*0.65); player.throttle=0.65; player.hp=PST.hp; player.alive=true;
   player.ammo=PST.msl; player.ammoT=0; player.cdM=0; player.cd=0; player.lastHit=99; player.smokeT=0;
   player.flares=player.flaresMax; player.flareCd=0; // ловушки — полный комплект на новую жизнь
+  player.cobraT=0; player.cobraCd=0; player.cobraP=0; // кобра — чистый лист на новую жизнь
   player.g=1; player.glocT=0; player.gPk=1; player.trailT=0;
   player.mesh.visible=true;
   mAccX=0; mAccY=0; mFltX=0; mFltY=0; lastMX=null; lastMY=null;
@@ -1644,6 +1686,19 @@ function updateBots(dt){
         }
       }
     }
+    // ===== кобра красного Су-57: срыв захвата ракет синих в окне 180–520 м, до 2 раз за жизнь =====
+    if(b.cobraCd>0) b.cobraCd-=dt;
+    if(b.pst.prem&&b.cobraN>0&&b.cobraCd<=0){
+      for(const m of missiles){
+        if(m.target!==b||m.team!=='blue') continue;
+        const md2=m.mesh.position.distanceToSquared(b.pos);
+        if(md2>32400&&md2<270400){
+          if(Math.random()<0.55){ m.target=null; m.dir.y-=0.22; m.dir.normalize(); m.life=Math.min(m.life,3.2); b.cobraN--; b.cobraCd=12; toast('Цель ушла в кобру — ракета потеряна'); }
+          else b.cobraCd=rand(1.2,2); // неудачная попытка — короткая пауза, ракета уже близко
+          break;
+        }
+      }
+    }
     if(b.hp<12){
       b.smokeT-=dt;
       if(b.smokeT<=0){
@@ -1659,6 +1714,19 @@ function updateBots(dt){
 // ================= ФИЗИКА ИГРОКА =================
 function updatePlayer(dt){
   if(!player.alive) return;
+  // ===== КОБРА (Су-57): скольжение на хвосте. Траектория — горизонталь (cobraDir), нос анимируется
+  // инкрементально: суммарный поворот за манёвр равен нулю, к концу quat совпадает с исходным =====
+  let cbr=false, cbT=0;
+  if(player.cobraT>0){
+    cbr=true; cbT=2.5-player.cobraT;
+    const dp=(cbT<0.5?7.8*(1-cbT/0.5):cbT<1.5?-0.25:cbT<2.1?-3.667:1.25)*Math.min(dt,0.05); // кламп dt — лаг-спайк не перелетает по тангажу
+    player.mesh.rotateX(dp); player.cobraP+=dp;
+    player.cobraT-=dt;
+    player.pos.y+=(cbT<0.9?22:-30)*dt; // подъём на вводе — просадка на выходе (горка)
+    player.g+=(1.3-player.g)*(1-Math.exp(-dt*4)); // перегрузка в кобре малая — в блэкаут не уходим
+    if(player.cobraT<=0){ player.cobraT=0; player.cobraCd=14; player.cobraP=0; }
+  }
+  if(player.cobraCd>0) player.cobraCd-=dt;
   // управление (угловые скорости сглаживаются)
   const auth=clamp(player.speed/44,0.35,1.08);
   // мышь — основное управление (крен/тангаж), клавиши — альтернатива; отклик живее (~1.7x от 0.0015)
@@ -1667,9 +1735,9 @@ function updatePlayer(dt){
   const mFl=1-Math.exp(-dt*8); // ход команды живой, но сглаженный
   mFltX+=(mR-mFltX)*mFl; mFltY+=(mP-mFltY)*mFl;
   const gloc=player.glocT>0; // G-LOC: сознание потеряно — управление отключено
-  const tP=clamp((keys.KeyS?1:0)-(keys.KeyW?1:0)+mFltY,-1,1);
-  const tR=clamp((keys.KeyA?1:0)-(keys.KeyD?1:0)+mFltX,-1,1);
-  const tY=(keys.KeyQ?1:0)-(keys.KeyE?1:0);
+  const tP=clamp((keys.KeyS?1:0)-(keys.KeyW?1:0)+mFltY,-1,1)*(cbr?0:1); // в кобре рули заморожены
+  const tR=clamp((keys.KeyA?1:0)-(keys.KeyD?1:0)+mFltX,-1,1)*(cbr?0:1);
+  const tY=((keys.KeyQ?1:0)-(keys.KeyE?1:0))*(cbr?0:1);
   const sm=1-Math.exp(-dt*10); // клавиши без задержки
   player.ctrl.p+=((gloc?0:tP)-player.ctrl.p)*sm;
   player.ctrl.r+=((gloc?0:tR)-player.ctrl.r)*sm;
@@ -1688,19 +1756,17 @@ function updatePlayer(dt){
     player.glocT=2+rand(0,1);
     toast('ПОТЕРЯ СОЗНАНИЯ! Перегрузка '+player.g.toFixed(1)+'G');
   }
-  player.mesh.rotateX(wP*dt);
-  player.mesh.rotateZ(wR*dt);
-  player.mesh.rotateY(wY*dt);
+  if(!cbr){ player.mesh.rotateX(wP*dt); player.mesh.rotateZ(wR*dt); player.mesh.rotateY(wY*dt); }
   // автовыравнивание: мышь и клавиши не активны — lerp к горизонтальному полёту
   const lvl=gloc?0:clamp(1-(Math.abs(mFltX)+Math.abs(mFltY))*5,0,1)*
             ((keys.KeyW||keys.KeyS||keys.KeyA||keys.KeyD)?0:1);
-  if(lvl>0){
+  if(lvl>0&&!cbr){
     _v1.copy(FWD).applyQuaternion(player.quat); // вектор носа
     _v2.copy(AX).applyQuaternion(player.quat);  // вектор правого крыла
     player.mesh.rotateZ(-_v2.y*0.6*lvl*auth*dt); // очень плавное выравнивание крена
     player.mesh.rotateX(-_v1.y*0.35*lvl*auth*dt); // и тангажа
   }
-  if(!gloc){ // при потере сознания — самолёт летит прямо
+  if(!gloc&&!cbr){ // при потере сознания — самолёт летит прямо
     _v1.copy(AX).applyQuaternion(player.quat);
     player.mesh.rotateOnWorldAxis(AY,_v1.y*0.55*dt);
   }
@@ -1723,7 +1789,9 @@ function updatePlayer(dt){
   const tSpd=PST.minSpd+player.throttle*(PST.maxSpd-PST.minSpd); // скорость — от ТТХ своего самолёта
   player.speed+=(tSpd-player.speed)*(1-Math.exp(-dt*0.55));
   _v1.copy(FWD).applyQuaternion(player.quat);
+  if(cbr) _v1.copy(player.cobraDir); // кобра: движение по зафиксированной горизонтали, нос стоит вертикально
   player.speed-=_v1.y*PST.climb*dt; // набор высоты замедляет по ТТХ (слабый двигатель — сильнее), пикирование разгоняет
+  if(cbr) player.speed+=(Math.max(player.cobraSpd*0.34,PST.minSpd+8)-player.speed)*(1-Math.exp(-dt*2.6)); // на скольжении скорость падает почти вдвое
   player.speed=clamp(player.speed,6,PST.maxSpd*1.28);
   player.vel.copy(_v1).multiplyScalar(player.speed);
   player.pos.addScaledVector(_v1,player.speed*dt);
@@ -1759,7 +1827,7 @@ function updatePlayer(dt){
     }
   }
   // огонь из пушек (при G-LOC стрелять нельзя)
-  if(mouseDown&&!gloc) playerFire(dt);
+  if(mouseDown&&!gloc&&!cbr) playerFire(dt); // в кобре пушки не работают — нос смотрит в зенит
   else player.cd=0;
   // граница зоны боя
   const dcen=Math.sqrt(player.pos.x*player.pos.x+player.pos.z*player.pos.z);
@@ -1817,7 +1885,7 @@ function updateCamera(dt){
     camera.quaternion.copy(player.quat);
     fovT = zoom?56:82;
   } else { // вид сзади, камера плавно следует
-    camQ.slerp(player.quat, 1-Math.exp(-dt*4.2));
+    camQ.slerp(player.quat, player.cobraT>0?0:1-Math.exp(-dt*4.2)); // в кобре камера остаётся на траектории — нос кувыркается сам
     _v1.set(0,2.4,11.5).applyQuaternion(camQ).add(player.pos);
     if(!camInit){ camera.position.copy(_v1); camInit=true; }
     else camera.position.lerp(_v1, 1-Math.exp(-dt*8));
@@ -1977,6 +2045,7 @@ const tgtRows=[];
 const elS=$('v-speed'), elA=$('v-alt'), elT=$('thr-fill'), elTp=$('v-thr'),
       elH=$('hp-fill'), elHn=$('v-hp'), elM=$('missiles'), elK=$('v-kills'),
       elF=$('flares'), elFcard=$('flr-card'), elMw=$('msl-warn'),
+      elCb=$('cobra-card'), elCbf=$('cobra-fill'),
       elLock=$('lock-ind'), elWarn=$('warn'), elDmg=$('dmg'), elLv=$('v-lives'),
       elRkMe=$('rk-me'), elTbB=$('tb-blue'), elTbR=$('tb-red'),
       elTbBn=$('tb-blue-n'), elTbRn=$('tb-red-n'),
@@ -2000,6 +2069,10 @@ function updateHUD(dt){
   const fpips=elF.children;
   for(let i=0;i<fpips.length;i++) fpips[i].classList.toggle('on', i<player.flares);
   elFcard.style.display=(player.flaresMax>0)?'block':'none';
+  elCb.style.display=(PST.prem&&PST.jet)?'block':'none'; // кобра — только Су-57
+  const cbF=(PST.prem&&PST.jet)?(player.cobraT>0?0:Math.round(clamp(1-player.cobraCd/14,0,1)*100)):0;
+  elCbf.style.width=cbF+'%';
+  elCbf.style.background=cbF>=100?'#ffd98f':'#8a6a4a';
   elK.textContent=pKills; // личный счёт — фраги союзников и краши красных в него не идут
   elLv.textContent=Math.max(0,playerLives);
   elLock.style.display=(state==='play'&&lockTarget)?'block':'none';
@@ -2128,6 +2201,7 @@ function restart(){
   player.speed=Math.round(PST.maxSpd*0.65); player.throttle=0.65; player.hp=PST.hp; player.alive=true;
   player.ammo=PST.msl; player.ammoT=0; player.cdM=0; player.cd=0; player.lastHit=99; player.smokeT=0;
   player.flares=player.flaresMax; player.flareCd=0; // ловушки — полный комплект
+  player.cobraT=0; player.cobraCd=0; player.cobraP=0; // кобра — чистый лист
   player.g=1; player.glocT=0; player.trailT=0;
   player.mesh.visible=true;
   for(const b of bullets){ b.on=false; b.mesh.visible=false; }
@@ -2427,77 +2501,14 @@ animate();
 
 
 
-;window.__WOG={
-  prog:()=>PROG, pst:()=>PST, st:()=>state, errs:()=>window.__ERRS||[],
-  sel(id){PROG.sel=id; applyPlayerPlane();},
-  toasts:()=>[...document.querySelectorAll('#msg .toast')].map(d=>d.textContent),
-  camoOf(mesh){ let withMap=0, mats=0; mesh.traverse(o=>{ if(o.isMesh){ mats++; if(o.material.map) withMap++; } });
-    return {withMap, mats, abLen:(mesh.userData.ab?mesh.userData.ab.length:0)}; },
-  plCamo(){ return this.camoOf(player.mesh); },
-  clearM(){for(const m of missiles){m.mesh.visible=false; scene.remove(m.mesh);} missiles.length=0;},
-  redAny(){ return bots.find(b=>b.team==='red'&&b.alive)||null; },
-  subj(who){ return who==='player'?player:(who==='red'?(this.redPrem()||this.redAny()):null); },
-  // подготовить постановочный кадр сверху: субъект выровнен, остальные уведены, камера над ним
-  topShot(who){
-    this.clearM(); this.freezeAll();
-    const s=this.subj(who); if(!s) return null;
-    for(const b of bots.concat(ALLIES)) if(b!==s) this.sendAway(b,2600);
-    if(s!==player) this.sendAway(player,2600);
-    this.topPose(s); this.topCamOf(s,50,11.5,2.6);
-    if(this._ptl) this._ptl.position.set(s.pos.x,s.pos.y+80,s.pos.z); // свет — над субъектом кадра
-    return s===player?'player':'red';
-  },
-  chaseShot(){ this.clearM(); this.freezeAll(); this.topPose(player); this.turnAntiSun(); return true; },
-  snap(){ state='pause'; // статичный кадр: animate() в паузе только рендерит
-    if(this.camOver){ // камеру ставим синхронно — между eval'ами может не пройти ни одного play-кадра
-      camera.position.copy(this.camOver.pos); camera.quaternion.copy(this.camOver.quat);
-      camFov=this.camOver.fov; camera.fov=camFov; camera.updateProjectionMatrix();
-    }
-    return true; },
-  resume(){ state='play'; return true; },
-  plTop(on){ // точечный свет строго сверху — для кадров сверху (солнце в сцене низкое)
-    if(on&&!this._ptl){ this._ptl=new THREE.PointLight(0xfff0dc,1.35,600); this._ptl.position.set(player.pos.x,player.pos.y+80,player.pos.z); scene.add(this._ptl); }
-    else if(!on&&this._ptl){ scene.remove(this._ptl); this._ptl=null; }
-    return true; },
-  redPrem(){ return bots.find(b=>b.team==='red'&&b.alive&&b.pst&&b.pst.prem)||null; },
-  freezeAll(){ for(const b of bots.concat(ALLIES)){ b.speed=0; b.threatT=99; } player.speed=0; return true; },
-  sendAway(o,d){ _v1.set(1,0,1).normalize(); o.pos.addScaledVector(_v1,d||2500); o.mesh.position.copy(o.pos); return true; },
-  // выровнять самолёт: горизонтально, нос на север, высоко над рельефом
-  topPose(o){ const ty=Math.max(terrainHeight(o.pos.x,o.pos.z),-2); o.pos.y=ty+420; o.mesh.position.copy(o.pos);
-    o.quat.identity(); o.mesh.quaternion.copy(o.quat); if('speed' in o) o.speed=0; return true; },
-  // камера: строго сверху-сзади, нос самолёта — вверх кадра (ракурс эталонного фото)
-  topCamOf(o,fov,hgt,bk){
-    const n=new THREE.Vector3(0,0,-1).applyQuaternion(o.quat); n.y=0; if(n.lengthSq()<0.01) n.set(0,0,-1); n.normalize();
-    const H=hgt||11.5, B=(bk===undefined)?2.6:bk;
-    const camPos=o.pos.clone().addScaledVector(n,-B).add(new THREE.Vector3(0,H,0));
-    const f=new THREE.Vector3().copy(o.pos).sub(camPos).normalize();
-    const Y=new THREE.Vector3().copy(n).addScaledVector(f,-n.dot(f)).normalize();
-    const Z=new THREE.Vector3().copy(f).negate();
-    const X=new THREE.Vector3().crossVectors(Y,Z).normalize();
-    const q=new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(X,Y,Z));
-    this.camOver={pos:camPos,quat:q,fov:fov||50}; return true; },
-  camAuto(v){ // перехват updateCamera (camQ в chase-режиме slerp'ится к игроку — прямой путь не работает)
-    if(v&&!this._uc){ this._uc=updateCamera;
-      updateCamera=(dt)=>{ if(this.camOver){ camera.position.copy(this.camOver.pos); camera.quaternion.copy(this.camOver.quat);
-        camFov=this.camOver.fov; camera.fov=camFov; camera.updateProjectionMatrix(); camShake=0; } else this._uc(dt); };
-    }
-    if(!v&&this._uc){ updateCamera=this._uc; this._uc=null; this.camOver=null; camInit=false; }
-    return true; },
-  turnAntiSun(){
-    _v1.copy(SUN_DIR).normalize();
-    _v2.copy(player.pos).sub(_v1).multiplyScalar(10);
-    player.mesh.lookAt(_v2); player.mesh.rotateY(Math.PI);
-    camQ.copy(player.quat); camInit=false;
-    return true; },
-  photoLight(on){
-    const amb=scene.children.find(o=>o.isAmbientLight), hemi=scene.children.find(o=>o.isHemisphereLight);
-    if(!amb||!hemi) return false;
-    if(on){ amb.intensity=1.0; amb.color.setHex(0xcfd8e2); hemi.intensity=0.85; }
-    else { amb.intensity=0.4; amb.color.setHex(0x33222e); hemi.intensity=0.55; }
-    return true; },
-  bankPose(){ player.mesh.rotateZ(0.9); camQ.copy(player.quat); camInit=false; return true; },
-  zoomOn(v){ zoomHeld=!!v; return true; }
-};
+
+
+
+
+
+
+
+
 })();
 
 </script>
