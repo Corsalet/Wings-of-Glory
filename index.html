@@ -125,6 +125,16 @@
   .plane-card{display:flex;align-items:center;gap:12px;padding:8px 10px;border:1px solid rgba(255,180,110,.14);border-radius:7px;margin-bottom:6px;background:rgba(0,0,0,.18)}
   .plane-card.sel{border-color:#d98a4a;background:rgba(217,138,74,.09);box-shadow:0 0 14px rgba(217,138,74,.18)}
   .tier-badge{flex:none;min-width:30px;height:30px;padding:0 7px;border-radius:15px;border:1.5px solid #d98a4a;color:#ffd9a0;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;font-family:monospace}
+  .tier-badge.prem{border-color:#e8c05a;color:#ffe9b0;box-shadow:0 0 10px rgba(232,192,90,.45)}
+  .plane-card.prem{border-color:rgba(232,192,90,.45);background:rgba(232,192,90,.07);box-shadow:0 0 14px rgba(232,192,90,.15)}
+  .prem-tag{font-size:9px;letter-spacing:1.5px;color:#e8c05a;border:1px solid rgba(232,192,90,.55);border-radius:3px;padding:1.5px 6px;margin-left:8px;vertical-align:middle;font-weight:800}
+  /* солнце-секрет в меню: кликни, чтобы ввести код */
+  #sun-egg{position:absolute;left:16%;top:20%;width:78px;height:78px;border-radius:50%;cursor:pointer;pointer-events:auto;display:none;
+    background:radial-gradient(circle,#fff6d0 0%,#ffd257 38%,rgba(255,160,40,.55) 66%,rgba(255,120,20,0) 100%);
+    box-shadow:0 0 60px 26px rgba(255,190,70,.5),0 0 150px 70px rgba(255,150,40,.25);
+    animation:sunpulse 2.4s ease-in-out infinite}
+  @keyframes sunpulse{50%{transform:scale(1.13);box-shadow:0 0 80px 36px rgba(255,205,85,.65),0 0 170px 86px rgba(255,150,40,.32)}}
+  #code-input{margin-top:16px;pointer-events:auto;width:82%;background:rgba(0,0,0,.4);border:1.5px solid #d98a4a;border-radius:6px;color:#ffd9a0;font-family:monospace;font-size:18px;letter-spacing:3px;text-align:center;padding:10px 12px;outline:none}
   .pc-main{flex:1;min-width:0}
   .pc-name{font-size:14.5px;font-weight:800;color:#ffe2b8;letter-spacing:.5px}
   .pc-spec{font-family:monospace;font-size:10.5px;color:var(--amber-dim);margin-top:2px}
@@ -223,6 +233,7 @@
   </div>
   <div id="lock-ind">ЗАХВАТ</div>
   <div id="warn"></div>
+  <div id="msl-warn"></div>
   <div id="msg"></div>
   <div id="compass">
     <svg width="128" height="128" viewBox="0 0 128 128">
@@ -244,6 +255,7 @@
 </div>
 
 <div id="ov-start" class="overlay">
+  <div id="sun-egg" title="Что это блеснуло?.."></div>
   <div class="panel">
     <div class="title">WINGS OF GLORY</div>
     <div class="subtitle">закат · дуэль над горами</div>
@@ -264,6 +276,31 @@
     <button id="btn-start">ВЗЛЕТЕТЬ ▸</button><button id="btn-hangar" class="secondary" style="margin-left:10px">АНГАР ▸</button>
     <div class="hint" id="menu-wallet" style="margin-top:10px;font-family:monospace;font-size:12px;color:#ffd27a"></div>
     <div class="hint">или нажмите Enter · клик по экрану захватывает мышь · самолёт летит только вперёд!</div>
+  </div>
+</div>
+
+<div id="ov-code" class="overlay hidden" style="z-index:12">
+  <div class="panel" style="max-width:430px">
+    <div id="code-form">
+      <div class="title" style="font-size:24px;letter-spacing:4px">СЕКРЕТНЫЙ КОД</div>
+      <div class="hint" style="margin-top:10px">Что-то блеснуло в небе… Введите код доступа к опытному образцу.</div>
+      <input id="code-input" maxlength="24" autocomplete="off" spellcheck="false" placeholder="КОД">
+      <div class="hint" id="code-msg" style="margin-top:8px;min-height:16px;color:#ff8a70"></div>
+      <button id="btn-code-ok" style="margin-top:6px">ПОДТВЕРДИТЬ ▸</button>
+      <div class="hint" style="margin-top:10px">Esc — закрыть</div>
+    </div>
+    <div id="code-success" style="display:none">
+      <div class="title" style="font-size:24px;color:#b8e090;letter-spacing:4px">УСПЕШНО!</div>
+      <svg width="130" height="130" viewBox="0 0 100 100" style="display:block;margin:12px auto 0">
+        <path d="M50 4 L54.5 20 L90 44 L90 53 L57 49 L59 68 L72 76 L72 83 L55 79 L50 84 L45 79 L28 83 L28 76 L41 68 L43 49 L10 53 L10 44 L45.5 20 Z" fill="#7fa8c8" stroke="#1d3242" stroke-width="1.6"/>
+        <circle cx="50" cy="30" r="3.2" fill="#1d3242"/>
+        <path d="M40 62 L36 75 M60 62 L64 75" stroke="#1d3242" stroke-width="2.4"/>
+        <path d="M46 8 L50 2 L54 8" fill="#e8c05a" stroke="none"/>
+      </svg>
+      <div class="stats" style="margin-top:8px">Су-57 · ранг XI · <span style="color:#e8c05a">ПРЕМИУМ</span></div>
+      <div class="hint" style="margin-top:4px">Пятое поколение · 8 ракет · лучшие ТТХ в игре</div>
+      <button id="btn-get-prem" style="margin-top:14px;border-color:#e8c05a;color:#ffe9b0">ПОЛУЧИТЬ! ▸</button>
+    </div>
   </div>
 </div>
 
@@ -300,7 +337,7 @@
 <div id="ov-hangar" class="overlay hidden">
   <div class="panel hangar-panel">
     <div class="title" style="font-size:26px">АНГАР</div>
-    <div class="subtitle">советская ветка · ранги I–X · от По-2 до Су-35</div>
+    <div class="subtitle">советская ветка · ранги I–XI · от По-2 до Су-57</div>
     <div class="wallet"><span id="w-money">0 ₽</span><span class="sep">·</span><span id="w-xp">0 опыта</span></div>
     <div id="hangar-list"></div>
     <div id="upg-box" class="upg-box"></div>
@@ -352,9 +389,10 @@ const PLANES=[
  {id:'mig15', name:'МиГ-15бис',   tier:7,  cost:62000,  hp:115, maxSpd:96,  minSpd:32, turn:1.00, climb:15, guns:'1 × 37 мм Н-37 + 2 × 23 мм НР-23', dmg:14, mono:true, jet:true, msl:0, kph:1076, desc:'Гроза «Сейбров» в небе Кореи. Легенда реактивного начала.'},
  {id:'mig21', name:'МиГ-21бис',   tier:8,  cost:85000,  hp:110, maxSpd:104, minSpd:34, turn:0.96, climb:13, guns:'1 × 23 мм ГШ-23Л + 2 × Р-3С',      dmg:15, mono:true, jet:true, msl:2, kph:2230, desc:'Сверхзвуковой долгожитель. Первые ракеты в ветке.'},
  {id:'mig29', name:'МиГ-29',      tier:9,  cost:115000, hp:125, maxSpd:112, minSpd:36, turn:0.98, climb:12, guns:'1 × 30 мм ГШ-301 + Р-27/Р-60',     dmg:17, mono:true, jet:true, msl:4, kph:2450, desc:'Фронтовой истребитель 4-го поколения. Кобра и «воронка».'},
- {id:'su35',  name:'Су-35С',      tier:10, cost:150000, hp:140, maxSpd:118, minSpd:36, turn:1.02, climb:11, guns:'1 × 30 мм ГШ-301 + Р-73/Р-77',     dmg:18, mono:true, jet:true, msl:6, kph:2520, desc:'Сверхманёвренный 4++. Вершина советской школы.'}
+ {id:'su35',  name:'Су-35С',      tier:10, cost:150000, hp:140, maxSpd:118, minSpd:36, turn:1.02, climb:11, guns:'1 × 30 мм ГШ-301 + Р-73/Р-77',     dmg:18, mono:true, jet:true, msl:6, kph:2520, desc:'Сверхманёвренный 4++. Вершина советской школы.'},
+ {id:'su57',  name:'Су-57',       tier:11, cost:0,      hp:150, maxSpd:124, minSpd:36, turn:1.06, climb:10, guns:'1 × 30 мм ГШ-301 + Р-74М2/Р-77М',  dmg:20, mono:true, jet:true, msl:8, kph:2600, prem:true, desc:'Пятое поколение. Единственный премиум — только по секретному коду.'}
 ];
-const TIER_ROMAN=['I','II','III','IV','V','VI','VII','VIII','IX','X'];
+const TIER_ROMAN=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI'];
 // улучшения самолёта за опыт: 4 ветки × 5 уровней
 const UPG_BRANCHES=[
  {id:'eng', name:'ДВИГАТЕЛЬ',  hint:'+4% макс. скорости'},
@@ -379,7 +417,7 @@ loadProg();
 function planeStats(id){ // ТТХ самолёта + улучшения (игрок)
   const p=PLANES.find(x=>x.id===id)||PLANES[0];
   const u=PROG.upg[p.id]||{eng:0,dur:0,hdl:0,gun:0};
-  return { id:p.id, name:p.name, tier:p.tier, mono:p.mono, jet:p.jet||false, msl:p.msl||0,
+  return { id:p.id, name:p.name, tier:p.tier, mono:p.mono, jet:p.jet||false, msl:p.msl||0, prem:p.prem||false,
     maxSpd:p.maxSpd*(1+u.eng*0.04),
     minSpd:p.minSpd,
     hp:p.hp+u.dur*8,
@@ -404,7 +442,7 @@ function applyRewards(victory){
 
 // ================= МАТЧМЕЙКИНГ РАНГОВ =================
 // Пул рангов ботов относительно ранга игрока: никогда не слабее игрока (кроме топов), у топов чуть ниже.
-const MM_POOL={1:[[1,.5],[2,.3],[3,.2]], 2:[[2,.45],[3,.35],[4,.2]], 3:[[3,.4],[4,.35],[5,.25]], 4:[[3,.25],[4,.4],[5,.35]], 5:[[4,.45],[5,.55]], 6:[[5,.35],[6,.45],[7,.2]], 7:[[6,.3],[7,.45],[8,.25]], 8:[[7,.3],[8,.4],[9,.3]], 9:[[8,.25],[9,.4],[10,.35]], 10:[[9,.45],[10,.55]]};
+const MM_POOL={1:[[1,.5],[2,.3],[3,.2]], 2:[[2,.45],[3,.35],[4,.2]], 3:[[3,.4],[4,.35],[5,.25]], 4:[[3,.25],[4,.4],[5,.35]], 5:[[4,.45],[5,.55]], 6:[[5,.35],[6,.45],[7,.2]], 7:[[6,.3],[7,.45],[8,.25]], 8:[[7,.3],[8,.4],[9,.3]], 9:[[8,.25],[9,.4],[10,.35]], 10:[[9,.45],[10,.55]], 11:[[10,.4],[11,.6]]};
 function rollBotTier(T){
   let r=Math.random();
   for(const [t,w] of MM_POOL[T]){ r-=w; if(r<=0) return t; }
@@ -424,8 +462,8 @@ function assignBotPlane(b, tier){ // назначить самолёт по ра
   if(b.planeBuilt!==pl.id){
     scene.remove(b.mesh);
     const pal = b.team==='blue'
-      ? {body:0x4a5d3a, wing:0x76854e, accent:0x9a4a1f, star:true, mono:pl.mono, jet:pl.jet, tier:pl.tier, msl:pl.msl||0}
-      : {body:0xb02a20, wing:0xc94b3c, accent:0x801812, cross:true, mono:pl.mono, jet:pl.jet, tier:pl.tier, msl:pl.msl||0};
+      ? {body:0x4a5d3a, wing:0x76854e, accent:0x9a4a1f, star:true, mono:pl.mono, jet:pl.jet, tier:pl.tier, msl:pl.msl||0, prem:pl.prem||false}
+      : {body:0xb02a20, wing:0xc94b3c, accent:0x801812, cross:true, mono:pl.mono, jet:pl.jet, tier:pl.tier, msl:pl.msl||0, prem:pl.prem||false};
     b.mesh=buildPlane(pal); scene.add(b.mesh);
     b.pos=b.mesh.position; b.quat=b.mesh.quaternion; b.prop=b.mesh.userData.prop;
     b.planeBuilt=pl.id;
@@ -602,6 +640,9 @@ function buildPlane(p){
     // воздухозаборники: боковые (4-е поколение) или брюшной (МиГ-21 и раньше)
     if(p.tier>=9){ for(const s of [-1,1]) add(new THREE.BoxGeometry(0.30,0.44,1.9), mDark, s*0.60,0.0,-1.0); }
     else add(new THREE.BoxGeometry(0.52,0.30,1.7), mDark, 0,-0.40,-0.8);
+    if(p.prem){ // Су-57: фирменные наплывы ЛЕРX от крыла к носу
+      for(const s of [-1,1]) add(new THREE.BoxGeometry(0.5,0.09,2.7), mBody, s*0.44,0.2,-0.9, 0, -s*0.09, 0);
+    }
     // стреловидное крыло с сужением + элероны
     for(const s of [-1,1]){
       const w=new THREE.Mesh(wingGeo(1.70,0.50,4.4,1.15,0.13,s), mWing);
@@ -769,7 +810,10 @@ function applyPlayerPlane(){ // применить выбранный в анг�
   player.hpMax=PST.hp;
   if(player.meshBuilt!==PST.id){
     scene.remove(player.mesh);
-    player.mesh=buildPlane({body:0x556b2f, wing:0x8f9e64, accent:0x9a4a1f, star:true, mono:PST.mono, jet:PST.jet, tier:PST.tier, msl:PST.msl});
+    const ppal = PST.prem // Су-57: стелс-серая гамма вместо зелёного камуфляжа
+      ? {body:0x4a5a68, wing:0x5d6f7d, accent:0x36434e, star:true, mono:PST.mono, jet:PST.jet, tier:PST.tier, msl:PST.msl, prem:true}
+      : {body:0x556b2f, wing:0x8f9e64, accent:0x9a4a1f, star:true, mono:PST.mono, jet:PST.jet, tier:PST.tier, msl:PST.msl};
+    player.mesh=buildPlane(ppal);
     scene.add(player.mesh);
     player.pos=player.mesh.position; player.quat=player.mesh.quaternion; player.prop=player.mesh.userData.prop;
     player.meshBuilt=PST.id;
@@ -861,6 +905,7 @@ window.addEventListener('keydown', e=>{
   else if(e.code==='Space' && state==='play') fireMissile(); // реактивные ранги: пуск ракеты
   else if(e.code==='KeyG' && state==='play') deployFlares(); // тепловые ловушки — отвод ракет
   else if(e.code==='KeyR' && (state==='play'||state==='dead')) restart();
+  else if(e.code==='Escape'&&document.getElementById('ov-code')&&!document.getElementById('ov-code').classList.contains('hidden')) closeCodeModal();
   else if(e.code==='Escape'||e.code==='KeyP') togglePause();
   else if(e.code==='Enter' && state==='menu') startGame();
   else if(e.code==='Enter' && state==='dead') restart();
@@ -1502,6 +1547,8 @@ function updateBots(dt){
     b.pos.addScaledVector(_v5, b.speed*dt);
     b.vel.copy(_v5).multiplyScalar(b.speed);
     b.prop.rotation.z += 45*dt;
+    const bAb=b.mesh.userData.ab; // форсаж ботов-реактивных
+    if(bAb){ bAb.material.opacity=0.3+Math.random()*0.3; bAb.scale.y=0.85+Math.random()*0.4; }
     const fireR=b.team==='red'?950:820; // красные открывают огонь дальше
     if(engage&&distT<fireR){ // очереди по цели
       b.attackT-=dt;
@@ -1905,6 +1952,30 @@ function updateHUD(dt){
   }
   elWarn.style.display=w?'block':'none';
   if(w) elWarn.innerHTML=w;
+  // ===== предупреждение о ракете: ступени 600 / 350 / 150 м, сторона, пискатор =====
+  let md=1e9, mside='';
+  if(state==='play'&&player.alive){
+    for(const m of missiles){
+      if(m.team!=='red'||m.target!==player) continue;
+      const d=m.mesh.position.distanceTo(player.pos);
+      if(d<md){
+        md=d;
+        _v1.copy(m.mesh.position).sub(player.pos).applyQuaternion(_q1.copy(player.quat).invert());
+        mside=_v1.z>8?'сзади':(_v1.z<-8?'впереди':(_v1.x>4?'справа':(_v1.x<-4?'слева':'')));
+      }
+    }
+  }
+  if(md<1e9){
+    const mst=md<150?3:md<350?2:1; // 1 — обнаружение, 2 — сближение, 3 — критично
+    elMw.textContent='РАКЕТА · '+Math.max(0,Math.round(md/10)*10)+' м'+(mside?' · '+mside:'');
+    elMw.style.display='block';
+    elMw.style.opacity=0.55+0.45*Math.abs(Math.sin(time*(mst===3?14:mst===2?8:4)));
+    mslBeepT-=dt;
+    if(mslBeepT<=0){
+      AudioSys.beep(mst===3?1350:mst===2?1000:780, mst===3?0.09:0.13, mst===3?0.3:mst===2?0.24:0.18);
+      mslBeepT=mst===3?0.14:mst===2?0.32:0.6;
+    }
+  } else { elMw.style.display='none'; mslBeepT=0; }
   // вспышка урона
   dmgA=Math.max(0,dmgA-dt*1.6);
   let o=dmgA;
@@ -1982,6 +2053,7 @@ function startGame(){
   for(const b of bots){ b.lives=3; resetBot(b); } // после setupTiers модели новые — расставить ботов заново (иначе они в (0,0,0) и крашатся)
   state='play';
   $('ov-start').classList.add('hidden');
+  $('sun-egg').style.display='none'; // солнце-секрет — только в меню
   $('hud').classList.add('on');
   camQ.copy(player.quat); camInit=false;
   mouseDown=false; zoomHeld=false; lastMX=null; lastMY=null;
@@ -2096,10 +2168,11 @@ function renderHangar(){
       let btn;
       if(sel) btn='<button class="pc-btn" disabled>ВЫБРАН ✓</button>';
       else if(owned) btn='<button class="pc-btn owned" data-act="sel" data-id="'+p.id+'">ВЫБРАТЬ</button>';
+      else if(p.prem) btn='<button class="pc-btn" disabled>ТРЕБУЕТСЯ КОД</button>'; // премиум не продаётся
       else btn='<button class="pc-btn" data-act="buy" data-id="'+p.id+'" '+(PROG.money<p.cost?'disabled':'')+'>КУПИТЬ · '+fmtMoney(p.cost)+'</button>';
-      html+='<div class="plane-card'+(sel?' sel':'')+'">'
-        +'<div class="tier-badge">'+TIER_ROMAN[t-1]+'</div>'
-        +'<div class="pc-main"><div class="pc-name">'+p.name+'</div>'
+      html+='<div class="plane-card'+(sel?' sel':'')+(p.prem?' prem':'')+'">'
+        +'<div class="tier-badge'+(p.prem?' prem':'')+'">'+TIER_ROMAN[t-1]+'</div>'
+        +'<div class="pc-main"><div class="pc-name">'+p.name+(p.prem?'<span class="prem-tag">ПРЕМИУМ</span>':'')+'</div>'
         +'<div class="pc-spec">'+(p.kph||Math.round(p.maxSpd*3.6))+' км/ч · '+p.hp+' HP · '+p.guns+' · урон '+p.dmg+'</div></div>'
         +btn+'</div>';
     }
@@ -2118,10 +2191,10 @@ function renderHangar(){
   }
   $('upg-box').innerHTML=uh;
 }
-$('hangar-list').addEventListener('click', e=>{
+  $('hangar-list').addEventListener('click', e=>{
   const btn=e.target.closest('button[data-act]'); if(!btn) return;
   const id=btn.dataset.id, p=PLANES.find(x=>x.id===id);
-  if(btn.dataset.act==='buy'&&p&&PROG.money>=p.cost){
+  if(btn.dataset.act==='buy'&&p&&!p.prem&&PROG.money>=p.cost){ // премиум не продаётся — только по коду
     PROG.money-=p.cost; PROG.owned.push(id); PROG.sel=id; saveProg();
     toast(p.name+' — куплен и выбран!');
     renderHangar();
@@ -2140,6 +2213,53 @@ $('upg-box').addEventListener('click', e=>{
 });
 $('btn-hangar').addEventListener('click', ()=>{ renderHangar(); $('ov-hangar').classList.remove('hidden'); });
 $('btn-hangar-close').addEventListener('click', ()=>{ $('ov-hangar').classList.add('hidden'); updateMenuWallet(); });
+
+// ================= СЕКРЕТ: СОЛНЦЕ В МЕНЮ + КОД -> Су-57 (премиум) =================
+let sunT=14, sunShownT=0; // солнце появляется в меню каждые ~25-40 с и висит 10 с
+function updateSunEgg(dt){
+  const el=document.getElementById('sun-egg');
+  if(PROG.owned.includes('su57')){ el.style.display='none'; return; } // секрет разоблачён — солнце больше не подсказывает
+  if(sunShownT>0){
+    sunShownT-=dt;
+    if(sunShownT<=0){ el.style.display='none'; sunT=rand(24,38); }
+  } else {
+    sunT-=dt;
+    if(sunT<=0){ el.style.display='block'; sunShownT=10; }
+  }
+}
+function openCodeModal(){
+  $('code-form').style.display=(PROG.prem?'none':'block');
+  $('code-success').style.display=(PROG.prem?'block':'none');
+  $('code-msg').textContent='';
+  $('code-input').value='';
+  $('ov-code').classList.remove('hidden');
+  if(!PROG.prem) setTimeout(()=>{ try{ $('code-input').focus(); }catch(e){} },60);
+}
+function closeCodeModal(){ $('ov-code').classList.add('hidden'); }
+function codeSubmit(){ // код нечувствителен к регистру
+  const v=($('code-input').value||'').trim().toLowerCase();
+  if(v==='meosan'){
+    PROG.prem=true; saveProg();
+    $('code-form').style.display='none';
+    $('code-success').style.display='block';
+  } else {
+    $('code-msg').textContent='Неверный код. Следи за небом в меню…';
+  }
+}
+$('sun-egg').addEventListener('click', openCodeModal);
+$('btn-code-ok').addEventListener('click', codeSubmit);
+$('code-input').addEventListener('keydown', e=>{ e.stopPropagation(); if(e.key==='Enter') codeSubmit(); }); // Enter в поле не запускает бой
+$('btn-get-prem').addEventListener('click', ()=>{
+  if(!PROG.owned.includes('su57')){
+    PROG.owned.push('su57');
+    if(!PROG.upg['su57']) PROG.upg['su57']={eng:0,dur:0,hdl:0,gun:0};
+    saveProg();
+    toast('Су-57 добавлен в ангар!');
+    updateMenuWallet();
+  }
+  closeCodeModal();
+});
+$('ov-code').addEventListener('click', e=>{ if(e.target.id==='ov-code') closeCodeModal(); });
 $('btn-prog-reset').addEventListener('click', ()=>{
   if(!confirm('Сбросить весь прогресс: деньги, опыт, самолёты и улучшения?')) return;
   try{ localStorage.removeItem(PROG_KEY); }catch(e){}
@@ -2167,7 +2287,7 @@ function animate(){
   if(state==='win') return; // победа — игра остановлена, последний кадр остаётся под оверлеем
   if(state!=='pause'){
     time+=dt;
-    if(state==='menu') updateMenuPilot(dt);
+    if(state==='menu'){ updateMenuPilot(dt); updateSunEgg(dt); }
     else{ // игровая симуляция — в меню не выполняется
       if(state==='play'){ updatePlayer(dt); computeLock(); }
       else if(state==='dead'){
@@ -2179,6 +2299,7 @@ function animate(){
       updateBullets(dt);
       updateMissiles(dt);
       updateParticles(dt);
+      updateFlares(dt);
       updateBoomLights(dt);
     }
     // облака дрейфуют вокруг игрока
@@ -2191,6 +2312,8 @@ function animate(){
     sky.position.copy(camera.position);
     sun.position.copy(camera.position).addScaledVector(SUN_DIR,14000);
     player.prop.rotation.z+=(4+player.throttle*42)*dt;
+    const pAb=player.mesh.userData.ab; // форсаж реактивных — мерцает от тяги
+    if(pAb){ pAb.material.opacity=0.22+player.throttle*0.24+Math.random()*0.2; pAb.scale.y=0.8+player.throttle*0.5+Math.random()*0.3; }
     AudioSys.engine(player.alive, player.speed, player.throttle, player.g);
     updateCamera(dt);
     updateHUD(dt);
@@ -2201,6 +2324,10 @@ function animate(){
   renderer.render(scene,camera);
 }
 animate();
+
+
+
+
 
 
 
