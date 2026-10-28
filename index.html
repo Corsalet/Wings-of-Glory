@@ -26,6 +26,10 @@
   #missiles{display:flex;gap:4px;justify-content:flex-end;margin-top:6px} /* ракеты — реактивные ранги VI–X */
   #missiles i{width:9px;height:16px;border:1px solid var(--amber-dim);border-radius:2px}
   #missiles i.on{background:#ffcf8f;box-shadow:0 0 6px rgba(255,180,90,.6)}
+  #flares{display:flex;gap:4px;justify-content:flex-end;margin-top:6px} /* тепловые ловушки — клавиша G */
+  #flares i{width:12px;height:8px;border:1px solid var(--amber-dim);border-radius:2px}
+  #flares i.on{background:#ffd98f;box-shadow:0 0 6px rgba(255,190,90,.6)}
+  #msl-warn{position:absolute;left:50%;top:26%;transform:translateX(-50%);font-family:'Consolas','Courier New',monospace;font-size:30px;font-weight:700;color:#ff5a4a;letter-spacing:2px;white-space:nowrap;display:none;text-shadow:0 0 18px rgba(255,60,30,.8),0 2px 6px #000}
   #v-kills{color:#ffd27a}
   #v-g.hot{color:#ff5a4a;text-shadow:0 0 9px rgba(255,60,30,.65)}
   #crosshair{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
@@ -193,6 +197,7 @@
   <div id="hud-right">
     <div><div class="hud-label">ПРОЧНОСТЬ</div><div class="bar"><div id="hp-fill"></div></div><div class="hud-small" id="v-hp">100 / 100</div></div>
     <div id="msl-card" style="display:none"><div class="hud-label">РАКЕТЫ</div><div id="missiles"></div></div>
+    <div id="flr-card" style="display:none"><div class="hud-label">ЛОВУШКИ · G</div><div id="flares"></div></div>
     <div><div class="hud-label">ЖИЗНИ</div><div class="hud-value" id="v-lives">3</div></div>
     <div><div class="hud-label">СБИТО</div><div class="hud-value" id="v-kills">0</div></div>
     <div id="tgt-list">
@@ -231,6 +236,8 @@
   </div>
   <div id="keypanel">
     <div class="kp-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#ffcf8f" stroke-width="1.3"><circle cx="7" cy="7" r="4.6"/><path d="M7 0.5v3M7 10.5v3M0.5 7h3M10.5 7h3"/><circle cx="7" cy="7" r="1" fill="#ff7a4a" stroke="none"/></svg><span class="kbd">ЛКМ</span>огонь</div>
+    <div class="kp-item"><span class="kbd">Space</span>ракета</div>
+    <div class="kp-item"><span class="kbd">G</span>ловушки</div>
     <div class="kp-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#ffcf8f" stroke-width="1.3"><rect x="1.5" y="3.5" width="11" height="8" rx="1.5"/><path d="M5 3.5 L6 1.8 h2 L9 3.5"/><circle cx="7" cy="7.5" r="2.2"/></svg><span class="kbd">B</span>камера</div>
     <div class="kp-item"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#ffcf8f" stroke-width="1.3"><circle cx="6" cy="6" r="3.8"/><path d="M9 9 L12.5 12.5"/></svg><span class="kbd">Z / ПКМ</span>зум</div>
   </div>
@@ -247,6 +254,8 @@
       <div class="ck"><span>Q / E</span>рыскание — нос влево / вправо</div>
       <div class="ck"><span>Shift / Ctrl</span>тяга больше / меньше (X = как Ctrl)</div>
       <div class="ck"><span>ЛКМ</span>пушки — трассеры</div>
+      <div class="ck"><span>Пробел</span>пуск ракеты — реактивные ранги</div>
+      <div class="ck"><span>G</span>тепловые ловушки — отвод ракет</div>
       <div class="ck"><span>B</span>вид из кабины / сзади</div>
       <div class="ck"><span>Z или ПКМ</span>зум камеры</div>
       <div class="ck"><span>M</span>звук вкл/выкл</div>
@@ -379,7 +388,7 @@ function planeStats(id){ // ТТХ самолёта + улучшения (игр
     dmg:p.dmg*(1+u.gun*0.08) };
 }
 function planeStatsBot(pl){ // боты без улучшений; hp бота — 35% от полного ТТХ (ИИ должен оставаться сбиваемым, как раньше 30-35 против 100)
-  return { id:pl.id, name:pl.name, tier:pl.tier, mono:pl.mono, jet:pl.jet||false,
+  return { id:pl.id, name:pl.name, tier:pl.tier, mono:pl.mono, jet:pl.jet||false, msl:pl.msl||0,
     maxSpd:pl.maxSpd, minSpd:pl.minSpd, turn:pl.turn, climb:pl.climb, dmg:pl.dmg,
     hp:Math.round(pl.hp*0.35) };
 }
@@ -415,8 +424,8 @@ function assignBotPlane(b, tier){ // назначить самолёт по ра
   if(b.planeBuilt!==pl.id){
     scene.remove(b.mesh);
     const pal = b.team==='blue'
-      ? {body:0x4a5d3a, wing:0x76854e, accent:0x9a4a1f, star:true, mono:pl.mono, jet:pl.jet}
-      : {body:0xb02a20, wing:0xc94b3c, accent:0x801812, cross:true, mono:pl.mono, jet:pl.jet};
+      ? {body:0x4a5d3a, wing:0x76854e, accent:0x9a4a1f, star:true, mono:pl.mono, jet:pl.jet, tier:pl.tier, msl:pl.msl||0}
+      : {body:0xb02a20, wing:0xc94b3c, accent:0x801812, cross:true, mono:pl.mono, jet:pl.jet, tier:pl.tier, msl:pl.msl||0};
     b.mesh=buildPlane(pal); scene.add(b.mesh);
     b.pos=b.mesh.position; b.quat=b.mesh.quaternion; b.prop=b.mesh.userData.prop;
     b.planeBuilt=pl.id;
@@ -560,7 +569,17 @@ water.rotation.x = -Math.PI/2;
 water.position.y = -5; // опущена против Z-fighting (мерцания) с дном
 scene.add(water);
 
-// ================= МОДЕЛЬ САМОЛЁТА (биплан) =================
+// ================= МОДЕЛЬ САМОЛЁТА =================
+// трапециевидное крыло (ExtrudeGeometry): root/tip — хорды у корня/законцовки, span — полуразмах,
+// sweep — сдвиг законцовки назад, sign — сторона (1 правое, -1 левое). Хорда тянется назад (+Z), толщина — вверх.
+function wingGeo(root,tip,span,sweep,thick,sign){
+  const s=new THREE.Shape();
+  s.moveTo(0,0); s.lineTo(sign*span,-sweep); s.lineTo(sign*span,-sweep-tip); s.lineTo(0,-root); s.closePath();
+  const g=new THREE.ExtrudeGeometry(s,{depth:thick,bevelEnabled:false});
+  g.rotateX(-Math.PI/2);
+  g.translate(0,-thick/2,0);
+  return g;
+}
 function buildPlane(p){
   const g = new THREE.Group();
   const mBody = new THREE.MeshPhongMaterial({color:p.body, flatShading:true, shininess:25});
@@ -575,64 +594,100 @@ function buildPlane(p){
   };
   let prop;
   if(p.jet){
-    // ===== РЕАКТИВНЫЕ (ранги VI–X): острый нос, стреловидные крылья, сопло с турбиной =====
-    add(new THREE.BoxGeometry(0.85,0.9,4.2), mBody, 0,0.05,-0.5);
-    add(new THREE.BoxGeometry(0.6,0.62,2.2), mBody, 0,0.12,1.7, 0.05);
-    add(new THREE.ConeGeometry(0.42,1.8,10), mBody, 0,0.05,-3.35, -Math.PI/2); // нос-игла
-    // стреловидное крыло — две консоли назад
+    // ===== РЕАКТИВНЫЕ (ранги VI–X): круглый фюзеляж, нос-игла, стреловидные трапеции, форсаж =====
+    add(new THREE.CylinderGeometry(0.30,0.46,3.4,8), mBody, 0,0.05,-0.55, Math.PI/2); // корпус, сужение к хвосту
+    add(new THREE.CylinderGeometry(0.13,0.30,1.9,8), mBody, 0,0.05,2.05, Math.PI/2);  // хвостовая балка
+    add(new THREE.ConeGeometry(0.46,2.1,10), mBody, 0,0.05,-3.3, -Math.PI/2);         // нос-игла
+    add(new THREE.CylinderGeometry(0.34,0.28,0.55,8), mDark, 0,0.05,3.15, Math.PI/2); // сопло
+    // воздухозаборники: боковые (4-е поколение) или брюшной (МиГ-21 и раньше)
+    if(p.tier>=9){ for(const s of [-1,1]) add(new THREE.BoxGeometry(0.30,0.44,1.9), mDark, s*0.60,0.0,-1.0); }
+    else add(new THREE.BoxGeometry(0.52,0.30,1.7), mDark, 0,-0.40,-0.8);
+    // стреловидное крыло с сужением + элероны
     for(const s of [-1,1]){
-      add(new THREE.BoxGeometry(4.5,0.13,1.8), mWing, s*2.45,0.32,-0.55, 0, -s*0.46, 0);
-      add(new THREE.BoxGeometry(1.6,0.06,0.34), mAcc, s*3.35,0.32,0.15, 0, -s*0.46, 0); // элерон
+      const w=new THREE.Mesh(wingGeo(1.70,0.50,4.4,1.15,0.13,s), mWing);
+      w.position.set(0,0.32,-1.30); g.add(w);
+      add(new THREE.BoxGeometry(1.5,0.06,0.32), mAcc, s*3.2,0.38,0.05, 0, -s*0.38, 0);
     }
-    // стреловидный стабилизатор + высокий киль
-    for(const s of [-1,1]) add(new THREE.BoxGeometry(1.9,0.08,0.95), mWing, s*1.5,0.32,3.05, 0, -s*0.5, 0);
-    add(new THREE.BoxGeometry(0.09,1.6,1.25), mAcc, 0,0.9,3.2);
-    // фонарь кабины (закрытый)
-    add(new THREE.BoxGeometry(0.6,0.36,1.4), mDark, 0,0.48,0.15);
-    add(new THREE.BoxGeometry(0.44,0.3,1.0), new THREE.MeshPhongMaterial({color:0xa8c8dc,transparent:true,opacity:0.5,side:THREE.DoubleSide}), 0,0.68,0.1, -0.12);
-    // сопло + турбина: вращается тем же кодом, что и винт поршневых
-    add(new THREE.CylinderGeometry(0.46,0.36,0.7,10), mDark, 0,0.05,2.95, Math.PI/2);
-    prop = new THREE.Group(); prop.position.set(0,0.05,3.3);
+    // стреловидный стабилизатор + киль (у 4-го поколения — двойной)
+    for(const s of [-1,1]){
+      const t=new THREE.Mesh(wingGeo(0.95,0.34,1.9,0.55,0.09,s), mWing);
+      t.position.set(0,0.22,2.95); g.add(t);
+    }
+    if(p.tier>=9){ for(const s of [-1,1]) add(new THREE.BoxGeometry(0.08,1.25,0.95), mAcc, s*0.55,0.80,3.15, 0.32); }
+    else add(new THREE.BoxGeometry(0.09,1.55,1.15), mAcc, 0,0.80,3.1, 0.30);
+    // фонарь-капля + гаргрот
+    const cp=add(new THREE.SphereGeometry(0.36,10,8), new THREE.MeshPhongMaterial({color:0xa8c8dc,transparent:true,opacity:0.5,side:THREE.DoubleSide}), 0,0.50,-0.15);
+    cp.scale.set(0.95,0.75,2.1);
+    add(new THREE.BoxGeometry(0.5,0.22,1.6), mDark, 0,0.40,1.35);
+    // турбина в сопле (вращается кодом винта) + форсажное пламя (мерцает в animate)
+    prop = new THREE.Group(); prop.position.set(0,0.05,3.45);
     const fan = new THREE.Mesh(new THREE.ConeGeometry(0.2,0.42,8), mDark);
     fan.rotation.x = Math.PI/2; prop.add(fan);
-    const glow = new THREE.Mesh(new THREE.CircleGeometry(0.3,16),
-      new THREE.MeshBasicMaterial({color:0xff9440, transparent:true, opacity:0.5, side:THREE.DoubleSide, depthWrite:false}));
-    glow.position.z = 0.1; prop.add(glow);
+    const glow = new THREE.Mesh(new THREE.CircleGeometry(0.28,16),
+      new THREE.MeshBasicMaterial({color:0xff9440, transparent:true, opacity:0.55, side:THREE.DoubleSide, depthWrite:false}));
+    glow.position.z = 0.12; prop.add(glow);
     g.add(prop);
+    const ab=new THREE.Mesh(new THREE.ConeGeometry(0.24,1.1,8),
+      new THREE.MeshBasicMaterial({color:0xff8a30,transparent:true,opacity:0.45,blending:THREE.AdditiveBlending,depthWrite:false}));
+    ab.position.set(0,0.05,3.7); ab.rotation.x=Math.PI/2; g.add(ab);
+    g.userData.ab=ab;
+    // подвесные ракеты — видимый боекомплект под крыльями
+    if(p.msl>0){
+      const mslM=new THREE.MeshPhongMaterial({color:0xd8d2c8, flatShading:true});
+      const n=Math.min(2,Math.ceil(p.msl/2));
+      for(const s of [-1,1]) for(let i=0;i<n;i++){
+        const px=s*(1.75+i*0.9);
+        add(new THREE.BoxGeometry(0.06,0.24,0.5), mDark, px,0.18,-0.45);
+        add(new THREE.CylinderGeometry(0.07,0.07,1.05,6), mslM, px,0.02,-0.45, Math.PI/2);
+        add(new THREE.ConeGeometry(0.07,0.3,6), mslM, px,0.02,-1.12, -Math.PI/2);
+        for(let k=0;k<4;k++){
+          const a=k*Math.PI/2;
+          const fin=add(new THREE.BoxGeometry(0.03,0.2,0.16), mslM, px+Math.sin(a)*0.09, 0.02+Math.cos(a)*0.09, -0.02);
+          fin.rotation.z=a;
+        }
+      }
+    }
   } else {
-  // фюзеляж
-  add(new THREE.BoxGeometry(1.0,1.05,4.4), mBody, 0,0.05,-0.9);
-  add(new THREE.BoxGeometry(0.62,0.6,2.7), mBody, 0,0.28,2.15, -0.05);
-  add(new THREE.CylinderGeometry(0.5,0.66,1.15,10), mDark, 0,0.05,-3.15, Math.PI/2);
-  // хвост
-  add(new THREE.BoxGeometry(3.1,0.09,1.05), mWing, 0,0.22,3.45);
-  add(new THREE.BoxGeometry(0.09,1.25,1.15), mAcc, 0,0.8,3.5);
-  // крылья: биплан (ранг I) или моноплан (ранг II+)
-  add(new THREE.BoxGeometry(9.6,0.14,1.6), mWing, 0,p.mono?0.35:1.42,-0.55);
-  if(!p.mono) add(new THREE.BoxGeometry(9.0,0.14,1.5), mWing, 0,-0.18,-0.35);
+  // фюзеляж — округлый (8-гранник), сужение к хвосту, капот двигателя
+  add(new THREE.CylinderGeometry(0.30,0.52,4.6,8), mBody, 0,0.05,-0.7, Math.PI/2);
+  add(new THREE.CylinderGeometry(0.13,0.30,2.3,8), mBody, 0,0.10,2.5, Math.PI/2); // хвостовая балка
+  add(new THREE.CylinderGeometry(0.46,0.55,0.9,8), mDark, 0,0.05,-3.0, Math.PI/2);
+  // хвост: стабилизатор на балке + стреловидный киль
+  add(new THREE.BoxGeometry(3.1,0.09,1.05), mWing, 0,0.14,3.35);
+  add(new THREE.BoxGeometry(0.09,1.25,1.05), mAcc, 0,0.72,3.45, 0.22);
+  // крылья: биплан (ранг I) или моноплан (ранг II+) — трапеция с лёгким поперечным V
+  for(const s of [-1,1]){
+    const wu=new THREE.Mesh(wingGeo(p.mono?1.85:1.5, 0.68, 4.8, p.mono?0.45:0.3, 0.14, s), mWing);
+    wu.position.set(0,p.mono?0.35:1.42,-1.45); if(p.mono) wu.rotation.z=s*0.045;
+    g.add(wu);
+    if(!p.mono){
+      const wl=new THREE.Mesh(wingGeo(1.4,0.62,4.5,0.25,0.14,s), mWing);
+      wl.position.set(0,-0.18,-1.3); g.add(wl);
+    }
+  }
   // стойки — только у биплана
   if(!p.mono){
     for(const sx of [-3.1,-1.55,1.55,3.1]) add(new THREE.BoxGeometry(0.09,1.6,0.12), mDark, sx,0.62,-0.45);
     for(const sx of [-0.6,0.6]) add(new THREE.BoxGeometry(0.09,1.6,0.12), mDark, sx,0.62,-0.5);
   }
-  // элероны
+  // элероны на верхнем крыле
   for(const sx of [-2.6,2.6]){
-    add(new THREE.BoxGeometry(2.6,0.06,0.3), mAcc, sx,p.mono?0.35:1.42,0.32);
-    if(!p.mono) add(new THREE.BoxGeometry(2.4,0.06,0.3), mAcc, sx,-0.18,0.3);
+    add(new THREE.BoxGeometry(2.4,0.06,0.3), mAcc, sx,(p.mono?0.35:1.42)+0.10,0.15);
+    if(!p.mono) add(new THREE.BoxGeometry(2.2,0.06,0.28), mAcc, sx,-0.08,0.1);
   }
   // кабина + пилот
-  add(new THREE.BoxGeometry(0.66,0.34,1.0), mDark, 0,0.5,0.42);
-  add(new THREE.BoxGeometry(0.5,0.3,0.05), new THREE.MeshPhongMaterial({color:0xa8c8dc,transparent:true,opacity:0.45,side:THREE.DoubleSide}), 0,0.78,-0.12, -0.28);
-  add(new THREE.SphereGeometry(0.17,8,8), new THREE.MeshPhongMaterial({color:0xd8a077,flatShading:true}), 0,0.66,0.45);
-  add(new THREE.BoxGeometry(0.42,0.16,0.3), mBody, 0,0.52,0.45);
-  // винт
+  add(new THREE.BoxGeometry(0.66,0.30,1.0), mDark, 0,0.48,0.42);
+  add(new THREE.BoxGeometry(0.5,0.3,0.05), new THREE.MeshPhongMaterial({color:0xa8c8dc,transparent:true,opacity:0.45,side:THREE.DoubleSide}), 0,0.74,-0.12, -0.28);
+  add(new THREE.SphereGeometry(0.17,8,8), new THREE.MeshPhongMaterial({color:0xd8a077,flatShading:true}), 0,0.63,0.45);
+  add(new THREE.BoxGeometry(0.42,0.16,0.3), mBody, 0,0.49,0.45);
+  // винт: кок + три лопасти + диск
   prop = new THREE.Group();
-  prop.position.set(0,0.05,-3.85);
-  const spinner = new THREE.Mesh(new THREE.ConeGeometry(0.2,0.55,8), mDark);
+  prop.position.set(0,0.05,-3.6);
+  const spinner = new THREE.Mesh(new THREE.ConeGeometry(0.22,0.6,8), mDark);
   spinner.rotation.x = -Math.PI/2; prop.add(spinner);
-  const b1 = new THREE.Mesh(new THREE.BoxGeometry(0.17,2.8,0.06), mDark); prop.add(b1);
-  const b2 = b1.clone(); b2.rotation.z = Math.PI/2; prop.add(b2);
-  const disc = new THREE.Mesh(new THREE.CircleGeometry(1.4,24),
+  const blade=new THREE.BoxGeometry(0.16,2.9,0.05);
+  for(let k=0;k<3;k++){ const bl=new THREE.Mesh(blade,mDark); bl.rotation.z=k*2.094; prop.add(bl); }
+  const disc = new THREE.Mesh(new THREE.CircleGeometry(1.45,24),
     new THREE.MeshBasicMaterial({color:0x6a5138, transparent:true, opacity:0.14, side:THREE.DoubleSide, depthWrite:false}));
   prop.add(disc);
   g.add(prop);
@@ -645,7 +700,7 @@ function buildPlane(p){
   }
   // опознавательные знаки: красные звёзды (ВВС РККА), круглелы, кресты
   if(p.star){
-    const wy = p.mono?0.43:1.5;
+    const wy = p.jet?0.40:(p.mono?0.43:1.5);
     for(const s of [-1,1]){
       const st = new THREE.Mesh(new THREE.PlaneGeometry(1.05,1.05), new THREE.MeshBasicMaterial({map:starTex(),transparent:true,depthWrite:false}));
       st.position.set(s*2.7,wy,-0.55); st.rotation.x=-Math.PI/2; g.add(st);
@@ -654,18 +709,20 @@ function buildPlane(p){
   if(p.roundel){
     const mw = new THREE.MeshBasicMaterial({color:0xf2ead8});
     const mr = new THREE.MeshBasicMaterial({color:0xb03a2a});
+    const wy = p.jet?0.40:(p.mono?0.43:1.5);
     for(const s of [-1,1]){
       const c1 = new THREE.Mesh(new THREE.CircleGeometry(0.46,20), mw);
-      c1.position.set(s*2.7,1.5,-0.55); c1.rotation.x = -Math.PI/2; g.add(c1);
+      c1.position.set(s*2.7,wy,-0.55); c1.rotation.x = -Math.PI/2; g.add(c1);
       const c2 = new THREE.Mesh(new THREE.CircleGeometry(0.24,20), mr);
-      c2.position.set(s*2.7,1.505,-0.55); c2.rotation.x = -Math.PI/2; g.add(c2);
+      c2.position.set(s*2.7,wy+0.005,-0.55); c2.rotation.x = -Math.PI/2; g.add(c2);
     }
   }
   if(p.cross){
     const mc = new THREE.MeshBasicMaterial({color:0x141414});
+    const wy = p.jet?0.40:(p.mono?0.43:1.5);
     for(const s of [-1,1]){
-      const a = new THREE.Mesh(new THREE.BoxGeometry(1.15,0.03,0.34), mc); a.position.set(s*2.7,1.51,-0.55); g.add(a);
-      const b = new THREE.Mesh(new THREE.BoxGeometry(0.34,0.03,1.15), mc); b.position.set(s*2.7,1.51,-0.55); g.add(b);
+      const a = new THREE.Mesh(new THREE.BoxGeometry(1.15,0.03,0.34), mc); a.position.set(s*2.7,wy+0.01,-0.55); g.add(a);
+      const b = new THREE.Mesh(new THREE.BoxGeometry(0.34,0.03,1.15), mc); b.position.set(s*2.7,wy+0.01,-0.55); g.add(b);
     }
   }
   // пулемёты
@@ -695,6 +752,7 @@ const player = {
   mesh: buildPlane(PAL_PLAYER),
   speed:55, throttle:0.65, hp:100, alive:true,
   ammo:4, ammoT:0, cd:0, cdM:0, lastHit:99, smokeT:0,
+  flares:0, flaresMax:0, flareCd:0,
   ctrl:{p:0,r:0,y:0}, vel:V3(),
   g:1, gPk:1, glocT:0, trailT:0,
   pst:null, hpMax:100, meshBuilt:null
@@ -711,14 +769,16 @@ function applyPlayerPlane(){ // применить выбранный в анг�
   player.hpMax=PST.hp;
   if(player.meshBuilt!==PST.id){
     scene.remove(player.mesh);
-    player.mesh=buildPlane({body:0x556b2f, wing:0x8f9e64, accent:0x9a4a1f, star:true, mono:PST.mono, jet:PST.jet});
+    player.mesh=buildPlane({body:0x556b2f, wing:0x8f9e64, accent:0x9a4a1f, star:true, mono:PST.mono, jet:PST.jet, tier:PST.tier, msl:PST.msl});
     scene.add(player.mesh);
     player.pos=player.mesh.position; player.quat=player.mesh.quaternion; player.prop=player.mesh.userData.prop;
     player.meshBuilt=PST.id;
     player.pos.set(0,300,0);
   }
   player.ammo=PST.msl; player.ammoT=0; player.cdM=0; // боекомплект ракет — от ТТХ самолёта (поршневые: 0)
+  player.flaresMax=PST.jet?(PST.msl>0?6:4):0; player.flares=player.flaresMax; player.flareCd=0; // ловушки: только реактивные
   $('missiles').innerHTML='<i></i>'.repeat(PST.msl||0);
+  $('flares').innerHTML='<i></i>'.repeat(player.flaresMax);
 }
 
 const GUNS = [V3(-0.35,0.55,-2.9), V3(0.35,0.55,-2.9)];
@@ -737,6 +797,7 @@ function resetBot(b){
     b.burst=0; b.threatT=0; b.attackT=rand(1,3); b.orbitA=rand(0,Math.PI*2);
     b.mesh.quaternion.copy(player.quat);
     b.vel.set(0,0,0);
+    b.mslAmmo=bp.msl||0; b.mslCd=rand(5,9); b.flares=bp.jet?3:0; b.flareCd=rand(1,3); // ракеты/ловушки ботов — на каждую жизнь
     return;
   }
   const a=rand(0,Math.PI*2), r=rand(4000,5200); // спавн красных в 4–5.2 км от игрока
@@ -746,6 +807,7 @@ function resetBot(b){
   b.burst=0; b.threatT=0; b.attackT=rand(0.5,2.2); b.orbitA=rand(0,Math.PI*2);
   b.mesh.lookAt(player.pos); b.mesh.rotateY(Math.PI);
   b.vel.set(0,0,0);
+  b.mslAmmo=bp.msl||0; b.mslCd=rand(5,9); b.flares=bp.jet?3:0; b.flareCd=rand(1,3); // ракеты/ловушки ботов — на каждую жизнь
 }
 for(let i=0;i<5;i++){
   const mesh = buildPlane(PAL_BOT);
@@ -797,6 +859,7 @@ window.addEventListener('keydown', e=>{
   if(e.code==='KeyB'){ camFP=!camFP; toast(camFP?'Вид из кабины':'Вид сзади'); }
   else if(e.code==='KeyM') AudioSys.toggleMute();
   else if(e.code==='Space' && state==='play') fireMissile(); // реактивные ранги: пуск ракеты
+  else if(e.code==='KeyG' && state==='play') deployFlares(); // тепловые ловушки — отвод ракет
   else if(e.code==='KeyR' && (state==='play'||state==='dead')) restart();
   else if(e.code==='Escape'||e.code==='KeyP') togglePause();
   else if(e.code==='Enter' && state==='menu') startGame();
@@ -899,6 +962,19 @@ const AudioSys = {
   hit(){ this.burst(0.12, 600, 2.5, 0.45); },
   clack(){ this.burst(0.06, 2400, 3, 0.22); },
   missileS(){ this.burst(0.7, 800, 0.9, 0.4); },
+  flareS(){ this.burst(0.45, 2600, 0.8, 0.28,'highpass'); this.burst(0.3, 850, 1.1, 0.2); }, // шипение ловушек
+  beep(f,dur,vol){ // пискатор предупреждения о ракете
+    if(!this.ctx) return;
+    try{
+      const t=this.ctx.currentTime;
+      const o=this.ctx.createOscillator(); o.type='square'; o.frequency.value=f;
+      const g=this.ctx.createGain();
+      g.gain.setValueAtTime(vol,t);
+      g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+      o.connect(g); g.connect(this.master);
+      o.start(t); o.stop(t+dur+0.02);
+    }catch(e){}
+  },
   toggleMute(){
     this.muted=!this.muted;
     if(this.master) this.master.gain.value = this.muted?0:0.32;
@@ -918,6 +994,7 @@ function toast(t){
 // ================= СОСТОЯНИЕ ИГРЫ =================
 let state='menu', time=0, kills=0, pKills=0, playerLives=3, blueLives=15, camShake=0, dmgA=0; // kills — общий счёт команды (победа/красная полоска), pKills — личный счёт игрока; blueLives — все жизни синих (5×3)
 let lockTarget=null, respawnQ=[], warnFlags={};
+let mslBeepT=0; // таймер пискатора предупреждения о ракете
 let deathT=0, deadShown=false, lastKiller=null;
 
 // ================= ЧАСТИЦЫ =================
@@ -1058,14 +1135,8 @@ function computeLock(){
     if(ang<best){ best=ang; lockTarget=b; }
   }
 }
-function fireMissile(){
-  if(!player.alive) return;
-  if(!PST.msl){ toast('На этом самолёте нет ракет'); return; }
-  if(player.ammo<=0){ toast('Ракеты перезаряжаются…'); return; }
-  if(player.cdM>0) return;
-  player.ammo--; player.cdM=1.2;
-  computeLock();
-  const m={mesh:new THREE.Group(), dir:V3(), speed:player.speed+35, target:lockTarget, life:14, trailT:0};
+function spawnMissile(shooter, target, team){ // общая фабрика ракет: игрок (blue) и боты (red)
+  const m={mesh:new THREE.Group(), dir:V3(), speed:shooter.speed+35, target:target, life:14, trailT:0, team:team, shooter:shooter};
   const body=new THREE.Mesh(misGeoBody,misMat); body.rotation.x=Math.PI/2; m.mesh.add(body);
   const nose=new THREE.Mesh(misGeoNose,misMat); nose.rotation.x=-Math.PI/2; nose.position.z=-0.72; m.mesh.add(nose);
   for(let i=0;i<4;i++){
@@ -1078,25 +1149,43 @@ function fireMissile(){
   const fl = new THREE.Sprite(new THREE.SpriteMaterial({map:flameTex, transparent:true, depthWrite:false, fog:false}));
   fl.position.z=0.95; fl.scale.setScalar(1.1);
   m.mesh.add(fl); m.flame=fl;
-  m.dir.copy(FWD).applyQuaternion(player.quat);
-  m.mesh.position.copy(player.pos).addScaledVector(m.dir,2.5);
+  m.dir.copy(FWD).applyQuaternion(shooter.quat);
+  m.mesh.position.copy(shooter.pos).addScaledVector(m.dir,2.5);
   m.mesh.position.add(_v1.set(rand(-1,1),0.3,rand(-1,1)));
   m.mesh.quaternion.setFromUnitVectors(FWD, m.dir);
   scene.add(m.mesh);
   missiles.push(m);
+  return m;
+}
+function fireMissile(){
+  if(!player.alive) return;
+  if(!PST.msl){ toast('На этом самолёте нет ракет'); return; }
+  if(player.ammo<=0){ toast('Ракеты перезаряжаются…'); return; }
+  if(player.cdM>0) return;
+  player.ammo--; player.cdM=1.2;
+  computeLock();
+  spawnMissile(player, lockTarget, 'blue');
   AudioSys.missileS();
-  toast(m.target?'Ракета: цель захвачена':'Ракета пущена');
+  toast(lockTarget?'Ракета: цель захвачена':'Ракета пущена');
+}
+function botMissile(b, T){ // пуск ИИ: звук тише с дистанцией; пуск по игроку — предупреждение
+  const m=spawnMissile(b, T, 'red');
+  const d=b.pos.distanceTo(player.pos);
+  AudioSys.burst(0.7, 800, 0.9, clamp(0.4-d*0.00022,0.06,0.4));
+  if(T===player&&player.alive){ toast('ПУСК РАКЕТЫ! Тепловые ловушки — G'); AudioSys.beep(1150,0.3,0.28); }
+  return m;
 }
 function updateMissiles(dt){
   for(let i=missiles.length-1;i>=0;i--){
     const m=missiles[i];
     m.life-=dt;
-    if(m.target && !m.target.alive) m.target=null;
+    if(m.target&&!m.target.alive) m.target=null; // цель погибла / ловушка погасла — ракета летит прямо
+    const red=m.team==='red';
     if(m.target){
       _v1.copy(m.target.pos).addScaledVector(m.target.vel,0.25).sub(m.mesh.position).normalize();
-      m.dir.lerp(_v1, Math.min(1, 3.4*dt)).normalize();
+      m.dir.lerp(_v1, Math.min(1,(red?2.6:3.4)*dt)).normalize(); // ракеты ботов инертнее — от них можно уйти манёвром
     }
-    m.speed = Math.min(m.speed+240*dt, 380);
+    m.speed = Math.min(m.speed+(red?170:240)*dt, red?300:380);
     m.mesh.position.addScaledVector(m.dir, m.speed*dt);
     m.mesh.quaternion.setFromUnitVectors(FWD, m.dir);
     m.flame.material.rotation = rand(0,6.28);
@@ -1107,27 +1196,111 @@ function updateMissiles(dt){
       spawnPart(smokeTex, m.mesh.position, _v1.set(rand(-1,1),rand(-1,1),rand(-1,1)), 1.5, 1.6, 2.6, 0.5, 1, 1.5);
     }
     let boom=false, hitBot=null;
-    for(const bot of bots){
-      if(!bot.alive||bot.team!=='red') continue;
-      if(m.mesh.position.distanceToSquared(bot.pos)<110){ boom=true; hitBot=bot; break; }
+    if(m.target&&m.target.isFlare&&m.mesh.position.distanceToSquared(m.target.pos)<100) boom=true; // подрыв на ловушке
+    if(!boom){
+      if(!red){
+        for(const bot of bots){
+          if(!bot.alive||bot.team!=='red') continue;
+          if(m.mesh.position.distanceToSquared(bot.pos)<110){ boom=true; hitBot=bot; break; }
+        }
+      } else {
+        if(player.alive&&m.mesh.position.distanceToSquared(player.pos)<110) boom=true;
+        if(!boom) for(const al of ALLIES){
+          if(!al.alive) continue;
+          if(m.mesh.position.distanceToSquared(al.pos)<110){ boom=true; break; }
+        }
+      }
     }
     if(m.mesh.position.y < Math.max(terrainHeight(m.mesh.position.x,m.mesh.position.z),-2)+1) boom=true;
     if(m.life<=0) boom=true;
     if(boom){
       explosion(m.mesh.position, 1.7);
-      for(const bot of bots){
-        if(!bot.alive||bot.team!=='red') continue;
-        const d=m.mesh.position.distanceTo(bot.pos);
-        if(d<50) damageBot(bot, hitBot===bot?60:50*(1-d/50), bot.pos, 'player');
-      }
-      if(player.alive){
-        const d=m.mesh.position.distanceTo(player.pos);
-        if(d<45) damagePlayer(32*(1-d/45));
+      if(!red){ // синие ракеты бьют красных
+        for(const bot of bots){
+          if(!bot.alive||bot.team!=='red') continue;
+          const d=m.mesh.position.distanceTo(bot.pos);
+          if(d<50) damageBot(bot, hitBot===bot?60:50*(1-d/50), bot.pos, 'player');
+        }
+      } else { // красные — по игроку и ведомым (×0.62, как у пуль — компенсация ИИ)
+        if(player.alive){
+          const d=m.mesh.position.distanceTo(player.pos);
+          if(d<45) damagePlayer(37*(1-d/45));
+        }
+        for(const al of ALLIES){
+          if(!al.alive) continue;
+          const d=m.mesh.position.distanceTo(al.pos);
+          if(d<50) damageBot(al, 31*(1-d/50), al.pos, m.shooter);
+        }
       }
       m.mesh.visible=false;
       scene.remove(m.mesh);
       missiles.splice(i,1);
     }
+  }
+}
+
+// ================= ТЕПЛОВЫЕ ЛОВУШКИ (G) =================
+const flareTexB=radialTex([[0,'rgba(255,255,232,1)'],[0.3,'rgba(255,212,110,0.95)'],[0.65,'rgba(255,140,40,0.55)'],[1,'rgba(255,110,20,0)']],64);
+const flaresArr=[]; // пул ловушек (общий для игрока и ботов)
+function spawnFlareEntity(pos,vel){
+  let f=null;
+  for(const q of flaresArr) if(!q.alive){ f=q; break; }
+  if(!f){
+    if(flaresArr.length>=48) return null;
+    f={spr:new THREE.Sprite(new THREE.SpriteMaterial({map:flareTexB,transparent:true,depthWrite:false,fog:false})),
+       pos:V3(), vel:V3(), life:0, alive:false, isFlare:true};
+    scene.add(f.spr); flaresArr.push(f);
+  }
+  f.alive=true; f.pos.copy(pos); f.vel.copy(vel); f.life=3.0;
+  f.spr.visible=true; f.spr.material.opacity=1;
+  return f;
+}
+function ejectFlares(pos,quat,n){ // выброс пачки: назад и в стороны
+  const out=[];
+  for(let i=0;i<n;i++){
+    _v2.set(rand(-1,1),rand(-0.7,0.1),rand(-0.6,0.6)).normalize().applyQuaternion(quat);
+    const v=_v3.copy(_v2).multiplyScalar(rand(15,24));
+    _v2.copy(FWD).applyQuaternion(quat);
+    v.addScaledVector(_v2,-8);
+    const f=spawnFlareEntity(pos,v);
+    if(f) out.push(f);
+  }
+  return out;
+}
+function updateFlares(dt){
+  for(const f of flaresArr){
+    if(!f.alive) continue;
+    f.life-=dt;
+    if(f.life<=0||f.pos.y<Math.max(terrainHeight(f.pos.x,f.pos.z),-2)+0.5){ f.alive=false; f.spr.visible=false; continue; }
+    f.vel.y-=15*dt; f.vel.multiplyScalar(1-Math.min(1,1.5*dt));
+    f.pos.addScaledVector(f.vel,dt);
+    f.spr.position.copy(f.pos);
+    f.spr.material.opacity=Math.min(1,f.life/1.1)*(0.8+Math.random()*0.2);
+    f.spr.scale.setScalar(2.2+Math.random()*1.1);
+    if(Math.random()<0.4) spawnPart(smokeTex,f.pos,_v1.set(rand(-1.5,1.5),rand(0.5,2.5),rand(-1.5,1.5)),0.8,1.1,1.6,0.5,1,1);
+  }
+}
+function deployFlares(){ // игрок: клавиша G. Отводит ТОЛЬКО ракеты дальше 120 м — ближе уже поздно
+  if(!player.alive) return;
+  if(!PST.jet){ toast('На этом самолёте нет тепловых ловушек'); return; }
+  if(player.flareCd>0) return;
+  if(player.flares<=0){ toast('Ловушки закончились'); return; }
+  player.flares--; player.flareCd=1.0;
+  const fresh=ejectFlares(player.pos,player.quat,4);
+  let saved=0;
+  for(const m of missiles){
+    if(m.team==='red'&&m.target===player&&m.mesh.position.distanceTo(player.pos)>120&&fresh.length&&Math.random()<0.8){
+      m.target=fresh[(Math.random()*fresh.length)|0]; saved++;
+    }
+  }
+  AudioSys.flareS();
+  toast(saved?'Ловушки отработали — ракета уведена':'Ловушки отработаны');
+}
+function botFlares(b){ // ИИ ловушек: боты отрабатывают сами, шанс отвода ниже, чем у игрока
+  const fresh=ejectFlares(b.pos,b.quat,3);
+  for(const m of missiles){
+    if(m.target===b&&m.mesh.position.distanceTo(b.pos)>120&&fresh.length&&Math.random()<0.5)
+      m.target=fresh[(Math.random()*fresh.length)|0];
   }
 }
 
@@ -1189,6 +1362,7 @@ function respawnPlayer(){ // возрождение за жизнь: kills и б
   player.quat.set(0,0,0,1);
   player.speed=Math.round(PST.maxSpd*0.65); player.throttle=0.65; player.hp=PST.hp; player.alive=true;
   player.ammo=PST.msl; player.ammoT=0; player.cdM=0; player.cd=0; player.lastHit=99; player.smokeT=0;
+  player.flares=player.flaresMax; player.flareCd=0; // ловушки — полный комплект на новую жизнь
   player.g=1; player.glocT=0; player.gPk=1; player.trailT=0;
   player.mesh.visible=true;
   mAccX=0; mAccY=0; mFltX=0; mFltY=0; lastMX=null; lastMY=null;
@@ -1342,6 +1516,27 @@ function updateBots(dt){
       b.gunT-=dt;
       if(b.gunT<=0){ botFire(b); b.burst--; b.gunT=0.105; }
     }
+    // ===== ракетный ИИ: пуски по цели впереди на средней дистанции (только красные) =====
+    if(b.team==='red'&&b.pst.msl>0&&b.mslAmmo>0&&state==='play'&&T){
+      b.mslCd-=dt;
+      if(b.mslCd<=0&&distT>450&&distT<1800){
+        _v5.copy(FWD).applyQuaternion(b.quat);
+        _v6.copy(T.pos).sub(b.pos).normalize();
+        if(_v5.dot(_v6)>0.93){ botMissile(b,T); b.mslAmmo--; b.mslCd=rand(9,14); }
+      }
+    }
+    // ===== тепловые ловушки ботов: автоматический отвод ракет (окно 140–600 м) =====
+    if(b.flares>0){
+      b.flareCd-=dt;
+      if(b.flareCd<=0){
+        for(const m of missiles){
+          if(m.target===b){
+            const md2=m.mesh.position.distanceToSquared(b.pos);
+            if(md2>19600&&md2<360000){ botFlares(b); b.flares--; b.flareCd=rand(1.4,2.4); break; }
+          }
+        }
+      }
+    }
     if(b.hp<12){
       b.smokeT-=dt;
       if(b.smokeT<=0){
@@ -1440,8 +1635,9 @@ function updatePlayer(dt){
   const gh=Math.max(terrainHeight(player.pos.x,player.pos.z),-2);
   if(player.pos.y<gh+2){ killPlayer(); return; }
   player.lastHit+=dt; // учёт времени с последнего урона (регенерация убрана)
-  // перезарядка ракет
+  // перезарядка ракет и ловушек
   player.cdM=Math.max(0,player.cdM-dt);
+  if(player.flareCd>0) player.flareCd-=dt;
   if(PST.msl>0&&player.ammo<PST.msl){
     player.ammoT+=dt;
     if(player.ammoT>8){ player.ammoT=0; player.ammo++; toast('Ракета заряжена'); }
@@ -1673,6 +1869,7 @@ const tgtRows=[];
 // ================= HUD =================
 const elS=$('v-speed'), elA=$('v-alt'), elT=$('thr-fill'), elTp=$('v-thr'),
       elH=$('hp-fill'), elHn=$('v-hp'), elM=$('missiles'), elK=$('v-kills'),
+      elF=$('flares'), elFcard=$('flr-card'), elMw=$('msl-warn'),
       elLock=$('lock-ind'), elWarn=$('warn'), elDmg=$('dmg'), elLv=$('v-lives'),
       elRkMe=$('rk-me'), elTbB=$('tb-blue'), elTbR=$('tb-red'),
       elTbBn=$('tb-blue-n'), elTbRn=$('tb-red-n'),
@@ -1693,6 +1890,9 @@ function updateHUD(dt){
   const pips=elM.children;
   for(let i=0;i<pips.length;i++) pips[i].classList.toggle('on', i<player.ammo);
   $('msl-card').style.display=(PST.msl>0)?'block':'none';
+  const fpips=elF.children;
+  for(let i=0;i<fpips.length;i++) fpips[i].classList.toggle('on', i<player.flares);
+  elFcard.style.display=(player.flaresMax>0)?'block':'none';
   elK.textContent=pKills; // личный счёт — фраги союзников и краши красных в него не идут
   elLv.textContent=Math.max(0,playerLives);
   elLock.style.display=(state==='play'&&lockTarget)?'block':'none';
@@ -1795,11 +1995,13 @@ function restart(){
   player.quat.set(0,0,0,1);
   player.speed=Math.round(PST.maxSpd*0.65); player.throttle=0.65; player.hp=PST.hp; player.alive=true;
   player.ammo=PST.msl; player.ammoT=0; player.cdM=0; player.cd=0; player.lastHit=99; player.smokeT=0;
+  player.flares=player.flaresMax; player.flareCd=0; // ловушки — полный комплект
   player.g=1; player.glocT=0; player.trailT=0;
   player.mesh.visible=true;
   for(const b of bullets){ b.on=false; b.mesh.visible=false; }
   for(const m of missiles) scene.remove(m.mesh);
   missiles.length=0;
+  for(const f of flaresArr){ f.alive=false; f.spr.visible=false; } // гасим ловушки
   for(const p of parts){ p.on=false; p.spr.visible=false; }
   for(const b of boomLights){ b.t=0; b.l.visible=false; }
   for(const b of bots){ b.lives=3; resetBot(b); }
@@ -1845,6 +2047,7 @@ function returnToMenu(){
   for(const b of bullets){ b.on=false; b.mesh.visible=false; }
   for(const m of missiles) scene.remove(m.mesh);
   missiles.length=0;
+  for(const f of flaresArr){ f.alive=false; f.spr.visible=false; } // гасим ловушки
   for(const p of parts){ p.on=false; p.spr.visible=false; }
   for(const b of boomLights){ b.t=0; b.l.visible=false; }
   for(const b of bots){ b.lives=3; resetBot(b); }
